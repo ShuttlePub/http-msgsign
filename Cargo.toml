@@ -1,0 +1,22 @@
+[package]
+name = "http-msgsign"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+
+[dependencies]
+http = "^1"
+http-body = "^1"
+http-body-util = "^0.1"
+sfv = "^0.11"
+bytes = "^1"
+base64 = "^0.22"
+thiserror = "^2"
+indexmap = "^2"
+ordermap = "^0.5"
+
+[dev-dependencies]
+sha2 = "^0.10"
+rsa = { version = "0.9.8", features = ["sha2"] }
+rand = "0.8"
+tokio = { version = "^1", features = ["rt-multi-thread", "macros"] }

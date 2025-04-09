@@ -1,4 +1,3 @@
-use http::Request;
 use std::fmt::Display;
 
 use crate::sign::components::{HttpComponent, Identifier, NameType, Parameters};
@@ -47,7 +46,7 @@ impl From<Derived> for Identifier {
 }
 
 impl Derived {
-    pub fn parse_request<B>(self, req: &Request<B>) -> HttpComponent {
+    pub fn parse_request<B>(self, req: &http::Request<B>) -> HttpComponent {
         match self {
             Derived::Method => {
                 HttpComponent::new(self, Some(req.method().to_string()))
@@ -71,18 +70,24 @@ impl Derived {
                 HttpComponent::new(self, Some(req.uri().query().unwrap_or("?")).map(|query| query.to_string()))
             }
             Derived::QueryParam(ref name) => {
-                let query = req.uri().query().unwrap()
-                    .split("&")
-                    .map(|kv| kv.split("=").collect::<Vec<_>>())
-                    .collect::<Vec<_>>();
-                let value = query.iter()
-                    .find(|kv| kv[0] == name)
-                    .map(|kv| kv[1]);
-                HttpComponent::new(self, value.map(|val| val.to_string()))
+                let value = extract_query_value(name, req).map(|val| val.to_string());
+                HttpComponent::new(self, value)
             }
             _ => {
                 unimplemented!()
             }
         }
     }
+}
+
+fn extract_query_value<'a, B>(key: &str, req: &'a http::Request<B>) -> Option<&'a str> {
+    let query = req.uri()
+        .query()?
+        .split("&")
+        .map(|kv| kv.split("=").collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    let value = query.iter()
+        .find(|kv| kv[0] == key)
+        .map(|kv| kv[1]);
+    value.to_owned()
 }

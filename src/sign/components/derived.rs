@@ -1,7 +1,7 @@
 use http::Request;
 use std::fmt::Display;
 
-use crate::sign::components::{HttpComponent, Identifier, Name, Parameters};
+use crate::sign::components::{HttpComponent, Identifier, NameType, Parameters};
 
 /// See [RFC9421 HTTP Message Signatures §2.2](https://datatracker.ietf.org/doc/html/rfc9421#section-2.2)
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -34,9 +34,9 @@ impl Display for Derived {
     }
 }
 
-impl From<Derived> for Name {
+impl From<Derived> for NameType {
     fn from(derived: Derived) -> Self {
-        Name::Derived(derived)
+        NameType::Derived(derived)
     }
 }
 

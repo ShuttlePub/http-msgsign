@@ -1,5 +1,5 @@
 use crate::errors::SignatureParamsError;
-use crate::sign::components::{Derived, HttpComponent, Identifier, Name, Parameters};
+use crate::sign::components::{Derived, HttpComponent, Identifier, NameType, Parameters};
 use indexmap::IndexSet;
 use std::fmt::{Display, Formatter};
 use std::time::SystemTime;
@@ -28,7 +28,7 @@ impl SignatureParams {
     }
     
     pub fn to_component(&self) -> HttpComponent {
-        HttpComponent::new(Identifier::new(Name::SignatureParams, Parameters::default()), Some(self.to_string()))
+        HttpComponent::new(Identifier::new(NameType::SignatureParams, Parameters::default()), Some(self.to_string()))
     }
 }
 
@@ -106,7 +106,7 @@ impl Builder {
     {
         self.and_then(|mut sign_params| {
             let header = header.try_into().map_err(Into::into)?;
-            sign_params.covered.insert(Identifier::new(Name::from(header), params));
+            sign_params.covered.insert(Identifier::new(NameType::from(header), params));
             Ok(sign_params)
         })
     }

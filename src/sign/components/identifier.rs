@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter};
-use crate::sign::components::{HttpComponent, Name, Parameters};
+use crate::sign::components::{HttpComponent, NameType, Parameters};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Identifier {
-    name: Name,
+    name: NameType,
     params: Parameters
 }
 
@@ -14,11 +14,11 @@ impl Display for Identifier {
 }
 
 impl Identifier {
-    pub fn new(name: Name, params: Parameters) -> Self {
+    pub fn new(name: NameType, params: Parameters) -> Self {
         Self { name, params }
     }
 
-    pub fn name(&self) -> &Name {
+    pub fn name(&self) -> &NameType {
         &self.name
     }
 
@@ -29,7 +29,7 @@ impl Identifier {
 
 impl Identifier {
     pub fn parse_request<B>(self, req: &http::Request<B>) -> HttpComponent {
-        if let Name::Standard(ref covered) = self.name {
+        if let NameType::Standard(ref covered) = self.name {
             let val = req.headers()
                 .get_all(covered)
                 .into_iter()
@@ -42,7 +42,7 @@ impl Identifier {
             }
             
             HttpComponent::new(self, Some(val.join(", ")))
-        } else if let Name::Derived(derived) = self.name {
+        } else if let NameType::Derived(derived) = self.name {
             derived.parse_request(req)
         } else {
             unreachable!()

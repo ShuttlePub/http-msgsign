@@ -1,23 +1,35 @@
-pub mod components;
+mod base;
 mod input;
 mod params;
-mod base;
+mod request;
+mod signature;
 
-pub use self::{
-    input::*,
-    params::SignatureParams,
-};
-
-pub trait SignerKey {
-    const ALGORITHM: &'static str;
-    
-    fn sign(&self, target: &str) -> Vec<u8>;
-    fn key_id(&self) -> String;
+pub mod header {
+    pub const SIGNATURE: &str = "signature";
+    pub const SIGNATURE_INPUT: &str = "signature-input";
 }
 
-pub trait VerifierKey {
+pub use self::{
+    base::SignatureBase,
+    input::*,
+    params::SignatureParams,
+    request::*, 
+};
+
+pub trait SignerKey: 'static + Sync + Send {
     const ALGORITHM: &'static str;
-    
-    fn verify(&self, target: &str, signature: &[u8]) -> bool;
+
     fn key_id(&self) -> String;
+    fn sign(&self, target: &[u8]) -> Vec<u8>;
+}
+
+pub trait VerifierKey: 'static + Sync + Send {
+    const ALGORITHM: &'static str;
+
+    fn key_id(&self) -> String;
+    fn verify(
+        &self,
+        target: &[u8],
+        signature: &[u8],
+    ) -> Result<(), crate::errors::VerificationError>;
 }

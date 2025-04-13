@@ -1,5 +1,6 @@
 mod body;
 mod request;
+mod header;
 
 pub use self::body::*;
 pub use self::request::*;
@@ -13,7 +14,7 @@ impl DigestHash {
     pub fn new(digest: Vec<u8>) -> Self {
         Self(digest)
     }
-    
+
     pub fn to_base64(&self) -> Base64EncodedString {
         Base64EncodedString::new(&self.0)
     }
@@ -21,6 +22,6 @@ impl DigestHash {
 
 pub trait ContentHasher: 'static + Send + Sync {
     const DIGEST_TYPE: &'static str;
-    
+
     fn hash(content: &[u8]) -> DigestHash;
 }

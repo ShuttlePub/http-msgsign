@@ -1,21 +1,21 @@
+mod base64;
+pub mod components;
 pub mod digest;
 pub mod errors;
-mod headers;
-mod base64;
 pub mod sign;
 
 #[cfg(test)]
 pub(crate) mod test {
-    use std::convert::Infallible;
     use bytes::Bytes;
     use http::Request;
-    use http_body_util::combinators::BoxBody;
     use http_body_util::Full;
-    
+    use http_body_util::combinators::BoxBody;
+    use std::convert::Infallible;
+
     pub fn create_body() -> Full<Bytes> {
         Full::new(Bytes::from_static(b"{\"hello\": \"world\"}"))
     }
-    
+
     pub fn create_request() -> Request<BoxBody<Bytes, Infallible>> {
         Request::builder()
             .method("GET")

@@ -8,7 +8,7 @@ impl Base64EncodedString {
     pub fn new<T: AsRef<[u8]>>(input: T) -> Self {
         Self(base64::engine::general_purpose::STANDARD.encode(input))
     }
-    
+
     pub fn decode(&self) -> Result<Vec<u8>, base64::DecodeError> {
         base64::engine::general_purpose::STANDARD.decode(&self.0)
     }

@@ -49,7 +49,7 @@ pub async fn body_digest() {
 //noinspection SpellCheckingInspection
 #[tokio::test]
 pub async fn request_digest() {
-    use http_msgsign::digest::RequestDigest;
+    use http_msgsign::digest::ContentDigest;
 
     let req = create_request();
     let req = req.digest::<Sha256Hasher>().await.unwrap();
@@ -73,7 +73,7 @@ pub async fn request_digest() {
 //noinspection SpellCheckingInspection
 #[tokio::test]
 pub async fn verify_request_digest() {
-    use http_msgsign::digest::RequestDigest;
+    use http_msgsign::digest::ContentDigest;
 
     let req = create_request();
     let req = req.digest::<Sha256Hasher>().await.unwrap();

@@ -1,7 +1,7 @@
 mod body;
 mod header;
 mod request;
-mod header;
+mod response;
 
 pub use self::body::*;
 

@@ -1,9 +1,9 @@
 mod body;
+mod header;
 mod request;
 mod header;
 
 pub use self::body::*;
-pub use self::request::*;
 
 use crate::base64::Base64EncodedString;
 
@@ -24,4 +24,19 @@ pub trait ContentHasher: 'static + Send + Sync {
     const DIGEST_TYPE: &'static str;
 
     fn hash(content: &[u8]) -> DigestHash;
+}
+
+pub trait ContentDigest {
+    type Error;
+    type Content;
+    fn digest<H: ContentHasher>(
+        self,
+    ) -> impl Future<Output = Result<Self::Content, Self::Error>> + Send
+    where
+        Self: Sized;
+    fn verify_digest<H: ContentHasher>(
+        self,
+    ) -> impl Future<Output = Result<Self::Content, Self::Error>> + Send
+    where
+        Self: Sized;
 }

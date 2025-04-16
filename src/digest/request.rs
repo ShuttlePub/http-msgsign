@@ -3,34 +3,20 @@ use http::Request;
 use http_body_util::combinators::BoxBody;
 use http_body_util::{BodyExt, Full};
 
+use super::ContentDigest;
 use crate::digest::{BodyDigest, ContentHasher};
 use crate::errors::DigestError;
 use crate::digest::header::CONTENT_DIGEST;
 
-pub trait RequestDigest {
-    type Error;
-    type Request;
-    fn digest<H: ContentHasher>(
-        self,
-    ) -> impl Future<Output = Result<Self::Request, Self::Error>> + Send
-    where
-        Self: Sized;
-    fn verify_digest<H: ContentHasher>(
-        self,
-    ) -> impl Future<Output = Result<Self::Request, Self::Error>> + Send
-    where
-        Self: Sized;
-}
-
-impl<B> RequestDigest for Request<B>
+impl<B> ContentDigest for Request<B>
 where
     B: http_body::Body + Send,
     B::Data: Send,
 {
     type Error = DigestError;
-    type Request = Request<BoxBody<Bytes, DigestError>>;
+    type Content = Request<BoxBody<Bytes, DigestError>>;
 
-    async fn digest<H: ContentHasher>(self) -> Result<Self::Request, Self::Error> {
+    async fn digest<H: ContentHasher>(self) -> Result<Self::Content, Self::Error> {
         let (mut parts, body) = self.into_parts();
         let actual = body.digest::<H>().await.map_err(|_e| DigestError::Body)?;
 
@@ -48,9 +34,9 @@ where
         Ok(Request::from_parts(parts, body))
     }
 
-    async fn verify_digest<H: ContentHasher>(self) -> Result<Self::Request, Self::Error> {
+    async fn verify_digest<H: ContentHasher>(self) -> Result<Self::Content, Self::Error> {
         let (parts, body) = self.into_parts();
-        let expect = crate::digest::header::extract_content_digest(&parts.headers)?;
+        let expect = super::header::extract_content_digest(&parts.headers)?;
 
         if !expect.alg.eq(H::DIGEST_TYPE) {
             return Err(DigestError::AlgorithmNotSupported);

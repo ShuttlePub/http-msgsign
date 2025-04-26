@@ -6,7 +6,6 @@ use indexmap::IndexSet;
 use crate::base64::Base64EncodedString;
 use crate::components::HttpComponent;
 use crate::errors::{HttpComponentError, VerificationError};
-use crate::params;
 use crate::sign::{ExchangeRecord, SignatureParams, SignerKey, VerifierKey};
 
 #[derive(Debug)]

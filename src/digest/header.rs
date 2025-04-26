@@ -23,6 +23,10 @@ pub(crate) fn extract_content_digest(
 
     let dictionary = sfv::Parser::new(header.as_bytes()).parse_dictionary()?;
 
+    // Fixme: Content-Digest can describe more than one, 
+    //        and since this data format is similar to the Dictionary type of SFV, 
+    //        this can specify any hash algorithm by using the key parameter defined in RFC9421. 
+    //        The correspondence should be made.
     // Content-Digest can include more than one as follows, but there is no choice of algorithm for the digest on RFC9421.
     // Content-Digest: <digest-algorithm>=<digest-value>,<digest-algorithm>=<digest-value>, …
     if dictionary.len() != 1 {

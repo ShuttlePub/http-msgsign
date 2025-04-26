@@ -1,34 +1,23 @@
 pub mod derive;
+mod field;
 mod identifier;
-mod name;
-mod parameters;
+pub mod params;
+pub(crate) mod values;
 
-pub use self::{derive::Derived, identifier::*, name::*, parameters::*};
+pub use self::{derive::Derive, field::*, identifier::*};
 
-use crate::errors::HttpFieldComponentError;
 use std::fmt::{Display, Formatter};
+
+use http::{Request, Response};
+
+use crate::errors::HttpComponentError;
+use crate::sign::ExchangeRecord;
 
 /// Canonical HTTP messages as per the rules defined in [RFC9421 HTTP Message Components](https://datatracker.ietf.org/doc/html/rfc9421#name-http-message-components)
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct HttpComponent {
     pub(crate) id: String,
     pub(crate) value: Option<String>,
-}
-
-pub trait ToComponent {
-    type Parameters;
-    fn to_component_with_request<B>(
-        &self,
-        request: &http::Request<B>,
-        params: &Self::Parameters,
-    ) -> Result<HttpComponent, HttpFieldComponentError>;
-    fn to_component_with_response<B>(
-        &self,
-        response: &http::Response<B>,
-        params: &Self::Parameters,
-    ) -> Result<HttpComponent, HttpFieldComponentError> {
-        todo!()
-    }
 }
 
 impl Display for HttpComponent {
@@ -39,5 +28,28 @@ impl Display for HttpComponent {
             Some(ref value) => write!(f, "{}: {}", self.id, value),
             None => write!(f, "{}: ", self.id),
         }
+    }
+}
+
+pub trait ToComponent {
+    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError>;
+}
+
+
+impl<B> ToComponent for Request<B> {
+    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError> {
+        target_field.seek_request(self)
+    }
+}
+
+impl<B> ToComponent for Response<B> {
+    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError> {
+        target_field.seek_response(self)
+    }
+}
+
+impl<Req, Res> ToComponent for ExchangeRecord<'_, Req, Res> {
+    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError> {
+        target_field.seek_record(self)
     }
 }

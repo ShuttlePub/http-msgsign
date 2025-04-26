@@ -1,10 +1,13 @@
-use crate::base64::Base64EncodedString;
-use crate::components::HttpComponent;
-use crate::errors::{HttpFieldComponentError, VerificationError};
-use crate::sign::{SignatureParams, SignerKey, VerifierKey};
+use std::fmt::Display;
+
 use http::HeaderMap;
 use indexmap::IndexSet;
-use std::fmt::Display;
+
+use crate::base64::Base64EncodedString;
+use crate::components::HttpComponent;
+use crate::errors::{HttpComponentError, VerificationError};
+use crate::params;
+use crate::sign::{ExchangeRecord, SignatureParams, SignerKey, VerifierKey};
 
 #[derive(Debug)]
 pub struct SignatureBase<'a> {
@@ -16,7 +19,7 @@ impl<'a> SignatureBase<'a> {
     pub fn from_request<B>(
         request: &http::Request<B>,
         params: &'a SignatureParams,
-    ) -> Result<Self, HttpFieldComponentError> {
+    ) -> Result<Self, HttpComponentError> {
         Ok(Self {
             params,
             covered: params.request_to_component(request)?,
@@ -27,11 +30,11 @@ impl<'a> SignatureBase<'a> {
         request: &http::Request<B>,
         params: &'a SignatureParams,
         key: &impl SignerKey,
-    ) -> Result<Self, HttpFieldComponentError> {
+    ) -> Result<Self, HttpComponentError> {
         Ok(Self {
             params,
             covered: params
-                .override_with_signer_key(key)
+                .load_signer_key(key)
                 .request_to_component(request)?,
         })
     }
@@ -39,7 +42,7 @@ impl<'a> SignatureBase<'a> {
     pub fn from_response<B>(
         response: &http::Response<B>,
         params: &'a SignatureParams,
-    ) -> Result<Self, HttpFieldComponentError> {
+    ) -> Result<Self, HttpComponentError> {
         Ok(Self {
             params,
             covered: params.response_to_component(response)?,
@@ -50,21 +53,45 @@ impl<'a> SignatureBase<'a> {
         response: &http::Response<B>,
         params: &'a SignatureParams,
         key: &impl SignerKey,
-    ) -> Result<Self, HttpFieldComponentError> {
+    ) -> Result<Self, HttpComponentError> {
         Ok(Self {
             params,
             covered: params
-                .override_with_signer_key(key)
+                .load_signer_key(key)
                 .response_to_component(response)?,
+        })
+    }
+    
+    pub fn from_exchange_record<Req, Res>(
+        exchange_record: &ExchangeRecord<Req, Res>,
+        params: &'a SignatureParams,
+    ) -> Result<Self, HttpComponentError> {
+        Ok(Self {
+            params,
+            covered: params
+                .record_to_component(exchange_record)?,
+        })
+    }
+    
+    pub fn from_exchange_record_with_signer_key<Req, Res>(
+        exchange_record: &ExchangeRecord<Req, Res>,
+        params: &'a SignatureParams,
+        key: &impl SignerKey,
+    ) -> Result<Self, HttpComponentError> {
+        Ok(Self {
+            params,
+            covered: params
+                .load_signer_key(key)
+                .record_to_component(exchange_record)?,
         })
     }
 
     pub fn into_header<S: SignerKey>(self, key: &S, label: &str) -> HeaderMap {
-        let overridden = self.params.override_with_signer_key(key);
+        let loaded = self.params.load_signer_key(key);
         let mut header = HeaderMap::new();
         header.insert(
             crate::sign::header::SIGNATURE_INPUT,
-            format!("{}={}", label, overridden).parse().unwrap(),
+            format!("{}={}", label, loaded).parse().unwrap(),
         );
         header.insert(
             crate::sign::header::SIGNATURE,
@@ -79,11 +106,7 @@ impl<'a> SignatureBase<'a> {
         Base64EncodedString::new(signer.sign(self.to_string().as_bytes()))
     }
 
-    pub fn verify(
-        &self,
-        verifier: &impl VerifierKey,
-        signature: &[u8],
-    ) -> Result<(), VerificationError> {
+    pub fn verify(&self, verifier: &impl VerifierKey, signature: &[u8]) -> Result<(), VerificationError> { 
         verifier.verify(self.to_string().as_bytes(), signature)
     }
 }

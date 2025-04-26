@@ -1,10 +1,11 @@
 use bytes::Bytes;
-use http::{Request, header};
-use http_body_util::Full;
+use http::{header, Request, Response};
 use http_body_util::combinators::BoxBody;
-use http_msgsign::components::{FieldParameters, derive};
+use http_body_util::Full;
+use http_msgsign::components::Derive;
 use http_msgsign::errors::VerificationError;
-use http_msgsign::sign::{RequestSign, SignatureParams, SignerKey, VerifierKey};
+use http_msgsign::params;
+use http_msgsign::sign::{BindRequest, ExchangeRecordSign, RequestSign, ResponseSign, SignatureParams, SignerKey, VerifierKey};
 use rsa::pkcs8::{DecodePrivateKey, DecodePublicKey};
 use rsa::pss::{SigningKey, VerifyingKey};
 use rsa::signature::{RandomizedSigner, SignatureEncoding, Verifier};
@@ -74,17 +75,36 @@ pub fn create_request() -> Request<BoxBody<Bytes, Infallible>> {
         .unwrap()
 }
 
+pub fn create_response() -> Response<BoxBody<Bytes, Infallible>> {
+    Response::builder()
+        .status(200)
+        .header("date", "Tue, 07 Jun 2014 20:51:36 GMT")
+        .header("content-type", "application/json")
+        .body(BoxBody::new(create_body()))
+        .unwrap()
+}
+
 pub fn create_signature_params() -> SignatureParams {
     SignatureParams::builder()
-        .add_derive(derive::method())
-        .add_header(header::DATE, FieldParameters::default())
-        .add_header(header::CONTENT_TYPE, FieldParameters::default())
+        .add_derive(Derive::Method, params![])
+        .add_header(header::DATE, params![])
+        .add_header(header::CONTENT_TYPE, params![])
+        .build()
+        .unwrap()
+}
+
+pub fn create_signature_params_for_record() -> SignatureParams {
+    SignatureParams::builder()
+        .add_derive(Derive::Status, params![])
+        .add_derive(Derive::Method, params![req])
+        .add_header(header::DATE, params![])
+        .add_header(header::CONTENT_TYPE, params![])
         .build()
         .unwrap()
 }
 
 #[tokio::test]
-pub async fn sign_request() {
+async fn sign_request() {
     let request = create_request();
     let signer = RsaSignerKey::default();
     let params = create_signature_params();
@@ -96,7 +116,7 @@ pub async fn sign_request() {
 }
 
 #[tokio::test]
-pub async fn verify_request() {
+async fn verify_request() {
     let request = create_request();
     let signer = RsaSignerKey::default();
     let params = create_signature_params();
@@ -107,4 +127,60 @@ pub async fn verify_request() {
     let request = request.unwrap();
     let request = request.verify_sign(&verifier, "sig").await;
     assert!(request.is_ok());
+}
+
+#[tokio::test]
+async fn sign_response() {
+    let response = create_response();
+    let signer = RsaSignerKey::default();
+    let params = create_signature_params();
+    let response = response.sign(&signer, "sig", &params).await;
+    assert!(response.is_ok());
+    
+    let response = response.unwrap();
+    println!("{:#?}", response);
+}
+
+#[tokio::test]
+async fn verify_response() {
+    let response = create_response();
+    let signer = RsaSignerKey::default();
+    let params = create_signature_params();
+    let response = response.sign(&signer, "sig", &params).await;
+    assert!(response.is_ok());
+    
+    let verifier = RsaVerifierKey::default();
+    let response = response.unwrap();
+    let response = response.verify_sign(&verifier, "sig").await;
+    assert!(response.is_ok());
+}
+
+#[tokio::test]
+async fn sign_exchange_record() {
+    let request = create_request();
+    let response = create_response();
+    let record = response.bind_request(&request);
+    let signer = RsaSignerKey::default();
+    let params = create_signature_params_for_record();
+    let record = record.sign(&signer, "sig", &params).await;
+    assert!(record.is_ok());
+    
+    let record = record.unwrap();
+    println!("{:#?}", record);
+}
+
+#[tokio::test]
+async fn verify_exchange_record() {
+    let request = create_request();
+    let response = create_response();
+    let record = response.bind_request(&request);
+    let signer = RsaSignerKey::default();
+    let params = create_signature_params_for_record();
+    let record = record.sign(&signer, "sig", &params).await;
+    assert!(record.is_ok());
+    
+    let verifier = RsaVerifierKey::default();
+    let record = record.unwrap();
+    let record = record.verify_sign(&verifier, "sig").await;
+    assert!(record.is_ok());
 }

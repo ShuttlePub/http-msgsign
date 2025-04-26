@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use indexmap::IndexSet;
 use sfv::{BareItem, InnerList, ListEntry};
 
-use crate::components::Identifier;
+use crate::components::TargetField;
 use crate::errors::{InvalidFormat, SignatureInputError};
 
 #[derive(Debug, Default)]
 pub struct SignatureInput {
-    pub(crate) covered: IndexSet<Identifier>,
+    pub(crate) covered: IndexSet<TargetField>,
     pub(crate) created: Option<u64>,
     pub(crate) expires: Option<u64>,
     pub(crate) algorithm: Option<String>,
@@ -38,7 +38,7 @@ impl SignatureInput {
 
             let covered = items
                 .into_iter()
-                .map(Identifier::try_from)
+                .map(TargetField::try_from)
                 .collect::<Result<IndexSet<_>, InvalidFormat>>()?;
 
             input.covered = covered;

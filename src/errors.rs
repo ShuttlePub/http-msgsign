@@ -1,3 +1,5 @@
+use crate::components::values::Value;
+
 #[derive(Debug, thiserror::Error)]
 pub enum DigestError {
     #[error("Http body error")]
@@ -73,6 +75,8 @@ pub enum SignatureInputError {
 pub enum SignatureParamsError {
     #[error(transparent)]
     InvalidHeaderName(#[from] http::Error),
+    #[error(transparent)]
+    InvalidParameter(#[from] InvalidSerializer)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -94,6 +98,38 @@ pub enum InvalidFormat {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum InvalidSerializer {
+    #[error("{0} is duplicated. Parameter keys must always be unique.")]
+    Duplicated(String),
+    
+    #[error("`{interrogator}` does not correspond to {reject}.")]
+    Incompatible {
+        interrogator: &'static str,
+        reject: String
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum SerializeError {
+    #[error("`{0:?}` is not a valid ASCII string.")]
+    MustBeASCIIString(Value),
+    #[error(transparent)]
+    SfvSerialize(#[from] sfv::Error),
+    #[error("{param_type} parameter does not support `{current_type}`.")]
+    InvalidSerializableValue {
+        param_type: String,
+        current_type: &'static str,
+    },
+    #[error("Entry with the specified key=`{0}` does not exist.")]
+    EntryNotExistsInDictionary(String),
+    #[error("Cannot be parsed as SFV format.")]
+    FailedParseToSfv,
+    #[error(transparent)]
+    InvalidFormat(#[from] InvalidFormat)
+    
+}
+
+#[derive(Debug, thiserror::Error)]
 #[error("Invalid derived component.")]
 pub struct InvalidDerivedComponent;
 
@@ -102,7 +138,13 @@ pub struct InvalidDerivedComponent;
 pub struct InvalidComponentParameter(pub sfv::Key, pub sfv::BareItem);
 
 #[derive(Debug, thiserror::Error)]
-pub enum HttpFieldComponentError {
+pub enum HttpComponentError {
+    #[error("Incorrect data type. expect: {expect}")]
+    InvalidDataType {
+        expect: &'static str,
+    },
+    #[error(transparent)]
+    FailedSerializeValue(#[from] SerializeError),
     #[error("Necessary requirement have not been met. {reason}")]
     UnmetRequirement { reason: &'static str },
     #[error("DerivedComponent({0}) not supported.")]
@@ -112,7 +154,7 @@ pub enum HttpFieldComponentError {
 #[derive(Debug, thiserror::Error)]
 pub enum SignError {
     #[error(transparent)]
-    FailedBuildSignatureBase(#[from] HttpFieldComponentError),
+    FailedBuildSignatureBase(#[from] HttpComponentError),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -126,7 +168,7 @@ pub enum VerificationError {
     #[error("Failed to decode signature. {0}")]
     FailedDecodeSignature(#[from] base64::DecodeError),
     #[error(transparent)]
-    FailedBuildSignatureBase(#[from] HttpFieldComponentError),
+    FailedBuildSignatureBase(#[from] HttpComponentError),
     #[error("Failed to verify signature")]
     FailedVerifySignature,
 }

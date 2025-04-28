@@ -3,26 +3,26 @@ use std::fmt::{Display, Formatter};
 use http::{Request, Response};
 
 use crate::components::params::{FieldParameter, Serializer};
-use crate::components::{HttpComponent, Identifier};
+use crate::components::{HttpComponent, NameType};
 use crate::components::values::Value;
 use crate::errors::{HttpComponentError, InvalidFormat, InvalidSerializer};
 use crate::sign::ExchangeRecord;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct TargetField {
-    id: Identifier,
+    name: NameType,
     params: Serializer,
 }
 
 impl Display for TargetField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}", self.id, self.params)
+        write!(f, "{}{}", self.name, self.params)
     }
 }
 
 impl TargetField {
-    pub fn new(id: Identifier, params: FieldParameter) -> Result<Self, InvalidSerializer> {
-        Ok(Self { id, params: params.into_serializer()? })
+    pub fn new(name: NameType, params: FieldParameter) -> Result<Self, InvalidSerializer> {
+        Ok(Self { name, params: params.into_serializer()? })
     }
     
     pub fn seek_request<B>(
@@ -35,12 +35,12 @@ impl TargetField {
             });
         }
         
-        match &self.id {
-            Identifier::Derived(derive) => Ok(HttpComponent {
+        match &self.name {
+            NameType::Derived(derive) => Ok(HttpComponent {
                 id: self.to_string(),
                 value: derive.seek_request(request, &self.params)?,
             }),
-            Identifier::Standard(target) => {
+            NameType::Field(target) => {
                 let val = Value::from_header(target, request.headers())
                     .serialize(&self.params)?;
                 Ok(HttpComponent {
@@ -61,12 +61,12 @@ impl TargetField {
             });
         }
         
-        match &self.id {
-            Identifier::Derived(derive) => Ok(HttpComponent {
+        match &self.name {
+            NameType::Derived(derive) => Ok(HttpComponent {
                 id: self.to_string(),
                 value: derive.seek_response(response)?,
             }),
-            Identifier::Standard(target) => {
+            NameType::Field(target) => {
                 let val = Value::from_header(target, response.headers())
                     .serialize(&self.params)?;
                 Ok(HttpComponent {
@@ -82,14 +82,14 @@ impl TargetField {
         ExchangeRecord { request, response }: &ExchangeRecord<Req, Res>,
     ) -> Result<HttpComponent, HttpComponentError> {
         if self.params.require_request() {
-            match &self.id {
-                Identifier::Derived(derive) => {
+            match &self.name {
+                NameType::Derived(derive) => {
                     Ok(HttpComponent {
                         id: self.to_string(),
                         value: derive.seek_request(request, &self.params)?,
                     })
                 }
-                Identifier::Standard(target) => {
+                NameType::Field(target) => {
                     let val = Value::from_header(target, request.headers())
                         .serialize(&self.params)?;
                     Ok(HttpComponent {
@@ -99,14 +99,14 @@ impl TargetField {
                 }
             }
         } else {
-            match &self.id {
-                Identifier::Derived(derive) => {
+            match &self.name {
+                NameType::Derived(derive) => {
                     Ok(HttpComponent {
                         id: self.to_string(),
                         value: derive.seek_response(response)?,
                     })
                 }
-                Identifier::Standard(target) => {
+                NameType::Field(target) => {
                     let val = Value::from_header(target, response.headers())
                         .serialize(&self.params)?;
                     Ok(HttpComponent {
@@ -125,7 +125,7 @@ impl TryFrom<sfv::Item> for TargetField {
 
     fn try_from(sfv::Item { bare_item, params }: sfv::Item) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: Identifier::try_from(bare_item)?,
+            name: NameType::try_from(bare_item)?,
             params: Serializer::try_from(params).unwrap(),
         })
     }

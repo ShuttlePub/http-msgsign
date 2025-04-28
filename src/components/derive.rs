@@ -3,7 +3,7 @@ use std::fmt::Display;
 use http::{Request, Response};
 
 use crate::components::params::Serializer;
-use crate::components::Identifier;
+use crate::components::NameType;
 use crate::errors::{HttpComponentError, InvalidDerivedComponent, InvalidFormat};
 
 /// See [RFC9421 HTTP Message Signatures §2.2](https://datatracker.ietf.org/doc/html/rfc9421#section-2.2)
@@ -43,9 +43,9 @@ impl Display for Derive {
     }
 }
 
-impl From<Derive> for Identifier {
+impl From<Derive> for NameType {
     fn from(derived: Derive) -> Self {
-        Identifier::Derived(derived)
+        NameType::Derived(derived)
     }
 }
 

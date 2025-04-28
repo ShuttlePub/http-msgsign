@@ -4,7 +4,7 @@ use std::time::SystemTime;
 use indexmap::IndexSet;
 
 use crate::components::params::FieldParameter;
-use crate::components::{Derive, HttpComponent, Identifier, TargetField, ToComponent};
+use crate::components::{Derive, HttpComponent, NameType, TargetField, ToComponent};
 use crate::errors::{HttpComponentError, SignatureParamsError};
 use crate::sign::{ExchangeRecord, SignatureInput, SignerKey};
 
@@ -268,7 +268,7 @@ impl Builder {
             let header = header.try_into().map_err(Into::into)?;
             sign_params
                 .covered
-                .insert(TargetField::new(Identifier::from(header), params)?);
+                .insert(TargetField::new(NameType::from(header), params)?);
             Ok(sign_params)
         })
     }

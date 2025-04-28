@@ -4,37 +4,37 @@ use crate::components::Derive;
 use crate::errors::InvalidFormat;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum Identifier {
+pub enum NameType {
     Derived(Derive),
-    Standard(http::HeaderName),
+    Field(http::HeaderName),
 }
 
-impl Display for Identifier {
+impl Display for NameType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Identifier::Derived(derived) => Display::fmt(&derived, f),
-            Identifier::Standard(name) => write!(f, "\"{name}\""),
+            NameType::Derived(derived) => Display::fmt(&derived, f),
+            NameType::Field(name) => write!(f, "\"{name}\""),
         }
     }
 }
 
-impl From<http::HeaderName> for Identifier {
+impl From<http::HeaderName> for NameType {
     fn from(value: http::HeaderName) -> Self {
-        Self::Standard(value)
+        Self::Field(value)
     }
 }
 
-impl TryFrom<sfv::BareItem> for Identifier {
+impl TryFrom<sfv::BareItem> for NameType {
     type Error = InvalidFormat;
 
     fn try_from(value: sfv::BareItem) -> Result<Self, Self::Error> {
         if Derive::contains(&value) {
-            Derive::try_from(value).map(Identifier::Derived)
+            Derive::try_from(value).map(NameType::Derived)
         } else {
             let sfv::BareItem::String(ident) = value else {
                 return Err(InvalidFormat::String);
             };
-            Ok(Identifier::Standard(
+            Ok(NameType::Field(
                 http::HeaderName::try_from(String::from(ident))
                     .map_err(|e| InvalidFormat::HeaderName(e.into()))?,
             ))

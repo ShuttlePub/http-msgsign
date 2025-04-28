@@ -1,10 +1,10 @@
 pub mod derive;
 mod field;
-mod identifier;
+mod name;
 pub mod params;
 pub(crate) mod values;
 
-pub use self::{derive::Derive, field::*, identifier::*};
+pub use self::{derive::Derive, field::*, name::*};
 
 use std::fmt::{Display, Formatter};
 

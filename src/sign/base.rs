@@ -94,7 +94,7 @@ impl<'a> SignatureBase<'a> {
         );
         header.insert(
             crate::sign::header::SIGNATURE,
-            format!("{}=:{}:", label, self.sign_base(key))
+            format!("{}={}", label, self.sign_base(key).to_sfv())
                 .parse()
                 .unwrap(),
         );

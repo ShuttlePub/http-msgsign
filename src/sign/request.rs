@@ -47,13 +47,9 @@ where
     ) -> Result<Self, VerificationError> {
         let (parts, body) = self.into_parts();
         let signatures = Signatures::from_header(&parts.headers)?;
-        let input = SignatureInput::from_header(&parts.headers)?;
+        let inputs = SignatureInput::from_header(&parts.headers)?;
         let signature = signatures.get(label)?;
-        let Some(params) = input
-            .into_iter()
-            .find(|(input_label, _)| input_label.eq(&label))
-            .map(|(_, input)| SignatureParams::from(input))
-        else {
+        let Some(params) = inputs.get(label).map(SignatureParams::from) else {
             return Err(VerificationError::MissingSignatureInput(label.to_string()));
         };
 

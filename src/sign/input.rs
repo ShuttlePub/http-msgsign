@@ -6,6 +6,17 @@ use sfv::{BareItem, InnerList, ListEntry};
 use crate::components::TargetField;
 use crate::errors::{InvalidFormat, SignatureInputError};
 
+#[derive(Debug)]
+pub struct InputProfiles(HashMap<String, SignatureInput>);
+
+impl InputProfiles {
+    pub fn get(self, label: &str) -> Option<SignatureInput> {
+        self.0.into_iter()
+            .find(|(key, _)| key.eq(label))
+            .map(|(_, input)| input)
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct SignatureInput {
     pub(crate) covered: IndexSet<TargetField>,
@@ -20,7 +31,7 @@ pub struct SignatureInput {
 impl SignatureInput {
     pub fn from_header(
         header: &http::HeaderMap,
-    ) -> Result<HashMap<String, SignatureInput>, SignatureInputError> {
+    ) -> Result<InputProfiles, SignatureInputError> {
         let Some(input) = header.get(crate::sign::header::SIGNATURE_INPUT) else {
             return Err(SignatureInputError::NotExistInHeader);
         };
@@ -47,7 +58,7 @@ impl SignatureInput {
             profiles.insert(key.into(), input);
         }
 
-        Ok(profiles)
+        Ok(InputProfiles(profiles))
     }
 
     //noinspection SpellCheckingInspection

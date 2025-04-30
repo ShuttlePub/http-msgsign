@@ -27,15 +27,6 @@ pub enum ExtractHeaderError {
     InvalidHeaderValue(Box<dyn std::error::Error + Sync + Send + 'static>),
 }
 
-#[derive(Debug, thiserror::Error)]
-#[error("Content-Digest header should have only one value.")]
-pub struct TooManyDigestValues;
-
-impl From<TooManyDigestValues> for ExtractHeaderError {
-    fn from(error: TooManyDigestValues) -> Self {
-        ExtractHeaderError::InvalidHeaderValue(Box::new(error))
-    }
-}
 
 #[derive(Debug, thiserror::Error)]
 #[error("Invalid Content-Digest header value.")]

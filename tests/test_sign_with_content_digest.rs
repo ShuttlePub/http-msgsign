@@ -102,7 +102,7 @@ pub fn create_signature_params_for_request() -> SignatureParams {
         .add_derive(Derive::Method, params![])
         .add_header(header::DATE, params![])
         .add_header(header::CONTENT_TYPE, params![])
-        .add_header("content-digest", params![])
+        .add_header("content-digest", params![key("sha-256")])
         .build()
         .unwrap()
 }

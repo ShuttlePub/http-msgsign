@@ -3,7 +3,7 @@ use http::Response;
 use http_body_util::combinators::BoxBody;
 use http_body_util::{BodyExt, Full};
 use crate::digest::{BodyDigest, ContentDigest, ContentHasher};
-use crate::digest::header::CONTENT_DIGEST;
+use crate::digest::header::{self, CONTENT_DIGEST};
 use crate::errors::DigestError;
 
 impl<B> ContentDigest for Response<B>
@@ -24,7 +24,7 @@ where
         
         parts.headers.insert(
             CONTENT_DIGEST,
-            format!("{}=:{}:", H::DIGEST_TYPE, actual.digest.to_base64())
+            format!("{}={}", H::DIGEST_TYPE, actual.digest.to_base64().to_sfv())
                 .parse()
                 .unwrap(),
         );
@@ -34,15 +34,15 @@ where
     
     async fn verify_digest<H: ContentHasher>(self) -> Result<Self::Content, Self::Error> {
         let (parts, body) = self.into_parts();
-        let expect = super::header::extract_content_digest(&parts.headers)?;
-        
-        if !expect.alg.eq(H::DIGEST_TYPE) {
-            return Err(DigestError::AlgorithmNotSupported);
-        }
+        let Some(expect) = header::ContentDigest::from_header(&parts.headers)?
+            .find(H::DIGEST_TYPE) 
+        else { 
+            return Err(DigestError::AlgorithmNotSupported)
+        };
         
         let actual = body.digest::<H>().await.map_err(|_e| DigestError::Body)?;
         
-        if actual.digest != expect.digest {
+        if actual.digest != expect {
             return Err(DigestError::Mismatch);
         }
         

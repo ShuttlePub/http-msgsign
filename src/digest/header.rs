@@ -1,52 +1,44 @@
+use std::collections::HashMap;
+
 use crate::digest::DigestHash;
-use crate::errors::{ExtractHeaderError, InvalidContentDigest, TooManyDigestValues};
+use crate::errors::{ExtractHeaderError, InvalidContentDigest};
 
 pub const CONTENT_DIGEST: &str = "content-digest";
 
-pub(crate) struct ContentDigest {
-    pub alg: String,
-    pub digest: DigestHash,
-}
+pub struct ContentDigest(HashMap<String, DigestHash>);
 
-pub(crate) fn extract_content_digest(
-    map: &http::HeaderMap,
-) -> Result<ContentDigest, ExtractHeaderError> {
-    let header = match map.get(CONTENT_DIGEST).map(|header| header.to_str()) {
-        Some(Ok(header)) => header,
-        Some(Err(e)) => return Err(ExtractHeaderError::FailedToStr(e)),
-        None => {
-            return Err(ExtractHeaderError::NoExist {
-                header_name: CONTENT_DIGEST,
-            });
-        }
-    };
-
-    let dictionary = sfv::Parser::new(header.as_bytes()).parse_dictionary()?;
-
-    // Fixme: Content-Digest can describe more than one, 
-    //        and since this data format is similar to the Dictionary type of SFV, 
-    //        this can specify any hash algorithm by using the key parameter defined in RFC9421. 
-    //        The correspondence should be made.
-    // Content-Digest can include more than one as follows, but there is no choice of algorithm for the digest on RFC9421.
-    // Content-Digest: <digest-algorithm>=<digest-value>,<digest-algorithm>=<digest-value>, …
-    if dictionary.len() != 1 {
-        return Err(TooManyDigestValues.into());
+impl ContentDigest {
+    pub fn from_header(map: &http::HeaderMap) -> Result<ContentDigest, ExtractHeaderError> {
+        let header = match map.get(CONTENT_DIGEST).map(|header| header.to_str()) {
+            Some(Ok(header)) => header,
+            Some(Err(e)) => return Err(ExtractHeaderError::FailedToStr(e)),
+            None => {
+                return Err(ExtractHeaderError::NoExist {
+                    header_name: CONTENT_DIGEST,
+                });
+            }
+        };
+        
+        let dict = sfv::Parser::new(header.as_bytes())
+            .parse_dictionary()?
+            .into_iter()
+            .map(|(alg, digest)| {
+                match digest {
+                    sfv::ListEntry::Item(sfv::Item {
+                        bare_item: sfv::BareItem::ByteSequence(bytes),
+                        ..
+                    }) => Ok((alg.into(), DigestHash::new(bytes))),
+                    _ => Err(InvalidContentDigest),
+                }
+            })
+            .collect::<Result<HashMap<String, _>, InvalidContentDigest>>()?;
+        
+        Ok(Self(dict))
     }
-
-    let Some((alg, digest)) = dictionary.into_iter().next() else {
-        unreachable!("Empty should also be covered by a last minute check.");
-    };
-
-    let digest = match digest {
-        sfv::ListEntry::Item(sfv::Item {
-            bare_item: sfv::BareItem::ByteSequence(bytes),
-            ..
-        }) => bytes,
-        _ => return Err(InvalidContentDigest.into()),
-    };
-
-    Ok(ContentDigest {
-        alg: alg.to_string(),
-        digest: DigestHash::new(digest),
-    })
+    
+    pub fn find(self, find: &str) -> Option<DigestHash> {
+        self.0.into_iter()
+            .find(|(alg, _)| alg.eq(find))
+            .map(|(_, digest)| digest)
+    }
 }

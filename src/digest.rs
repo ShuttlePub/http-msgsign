@@ -7,7 +7,7 @@ pub use self::body::*;
 
 use crate::base64::Base64EncodedString;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct DigestHash(Vec<u8>);
 
 impl DigestHash {

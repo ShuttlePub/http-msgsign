@@ -1,17 +1,18 @@
+use std::convert::Infallible;
+
 use bytes::Bytes;
-use http::{header, Request, Response};
+use http::{header, Request};
 use http_body_util::combinators::BoxBody;
 use http_body_util::Full;
 use http_msgsign::components::Derive;
 use http_msgsign::errors::VerificationError;
 use http_msgsign::params;
-use http_msgsign::sign::{RequestSign, SignatureParams, SignerKey, VerifierKey};
+use http_msgsign::{RequestSign, SignatureParams, SignerKey, VerifierKey};
 use rsa::pkcs8::{DecodePrivateKey, DecodePublicKey};
 use rsa::pss::{SigningKey, VerifyingKey};
 use rsa::signature::{RandomizedSigner, SignatureEncoding, Verifier};
 use rsa::{RsaPrivateKey, RsaPublicKey};
 use sha2::Sha512;
-use std::convert::Infallible;
 
 pub struct RsaSignerKey(SigningKey<Sha512>);
 
@@ -75,15 +76,6 @@ pub fn create_request() -> Request<BoxBody<Bytes, Infallible>> {
         .unwrap()
 }
 
-pub fn create_response() -> Response<BoxBody<Bytes, Infallible>> {
-    Response::builder()
-        .status(200)
-        .header("date", "Tue, 07 Jun 2014 20:51:36 GMT")
-        .header("content-type", "application/json")
-        .body(BoxBody::new(create_body()))
-        .unwrap()
-}
-
 pub fn create_signature_params() -> SignatureParams {
     SignatureParams::builder()
         .add_derive(Derive::Method, params![])
@@ -93,15 +85,6 @@ pub fn create_signature_params() -> SignatureParams {
         .unwrap()
 }
 
-pub fn create_signature_params_for_record() -> SignatureParams {
-    SignatureParams::builder()
-        .add_derive(Derive::Status, params![])
-        .add_derive(Derive::Method, params![req])
-        .add_header(header::DATE, params![])
-        .add_header(header::CONTENT_TYPE, params![])
-        .build()
-        .unwrap()
-}
 
 #[tokio::test]
 async fn sign_request() {

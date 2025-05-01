@@ -1,3 +1,4 @@
+// noinspection DuplicatedCode
 use base64::Engine;
 use std::fmt::Display;
 

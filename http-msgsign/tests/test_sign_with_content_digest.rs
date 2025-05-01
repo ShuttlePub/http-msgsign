@@ -12,7 +12,7 @@ use http_msgsign::components::Derive;
 use http_msgsign::digest::{ContentDigest, ContentHasher, DigestHash};
 use http_msgsign::errors::VerificationError;
 use http_msgsign::params;
-use http_msgsign::sign::{BindRequest, ExchangeRecordSign, RequestSign, ResponseSign, SignatureParams, SignerKey, VerifierKey};
+use http_msgsign::{BindRequest, ExchangeRecordSign, RequestSign, ResponseSign, SignatureParams, SignerKey, VerifierKey};
 
 pub struct Sha256Hasher;
 

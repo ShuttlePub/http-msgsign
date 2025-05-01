@@ -3,8 +3,8 @@ use bytes::Bytes;
 use http::{Response, StatusCode};
 use http_body_util::combinators::BoxBody;
 use http_body_util::Full;
-use rsa::signature::digest::Digest;
-use http_msgsign::digest::{ContentDigest, ContentHasher, DigestHash};
+use sha2::Digest;
+use http_content_digest::{ContentDigest, ContentHasher, DigestHash};
 
 pub struct Sha256Hasher;
 
@@ -34,7 +34,7 @@ pub fn create_response() -> Response<BoxBody<Bytes, Infallible>> {
 
 //noinspection SpellCheckingInspection
 #[tokio::test]
-async fn response_digest() {
+async fn digest() {
     let res = create_response();
     let res = res.digest::<Sha256Hasher>().await;
     
@@ -60,7 +60,7 @@ async fn response_digest() {
 
 //noinspection SpellCheckingInspection
 #[tokio::test]
-async fn verify_response_digest() {
+async fn verify() {
     let res = create_response();
     let res = res.digest::<Sha256Hasher>().await;
     let res = res.unwrap();

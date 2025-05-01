@@ -11,7 +11,7 @@ use sha2::Sha512;
 use http_msgsign::components::Derive;
 use http_msgsign::errors::VerificationError;
 use http_msgsign::params;
-use http_msgsign::sign::{BindRequest, ExchangeRecordSign, ResponseSign, SignatureParams, SignerKey, VerifierKey};
+use http_msgsign::{BindRequest, ExchangeRecordSign, ResponseSign, SignatureParams, SignerKey, VerifierKey};
 
 pub struct RsaSignerKey(SigningKey<Sha512>);
 

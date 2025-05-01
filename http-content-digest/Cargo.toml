@@ -1,0 +1,22 @@
+[package]
+name = "http-content-digest"
+version = "0.1.0"
+description = "Give `Content-Digest` to Request/Response of `http` crate."
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+http = { workspace = true }
+http-body = { workspace = true }
+http-body-util = { workspace = true }
+
+sfv = { workspace = true }
+
+bytes = { workspace = true }
+base64 = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { version = "^1", default-features = false, features = ["rt-multi-thread", "macros"] }
+sha2 = "0.10.8"

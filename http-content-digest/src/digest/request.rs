@@ -26,7 +26,7 @@ where
 
         parts.headers.insert(
             CONTENT_DIGEST,
-            format!("{}={}", H::DIGEST_TYPE, actual.digest.to_base64().to_sfv())
+            format!("{}={}", H::DIGEST_ALG, actual.digest.to_base64().to_sfv())
                 .parse()
                 .unwrap(),
         );
@@ -36,8 +36,7 @@ where
 
     async fn verify_digest<H: ContentHasher>(self) -> Result<Self::Content, Self::Error> {
         let (parts, body) = self.into_parts();
-        let Some(expect) = header::ContentDigest::from_header(&parts.headers)?
-            .find(H::DIGEST_TYPE)
+        let Some(expect) = header::ContentDigest::from_header(&parts.headers)?.find(H::DIGEST_ALG)
         else {
             return Err(DigestError::AlgorithmNotSupported)
         };

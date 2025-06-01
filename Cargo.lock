@@ -244,6 +244,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "http-msgsign-draft"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bytes",
+ "http",
+ "http-body",
+ "http-body-util",
+ "http-content-digest",
+ "indexmap",
+ "rand",
+ "rsa",
+ "sha2",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -492,9 +510,9 @@ checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
 
 [[package]]
 name = "sfv"
-version = "0.11.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcb06c0da8bc20b8e9f0349d655d1d29ce732b919c13c8d0ed7a14a8fcb9c90f"
+checksum = "a8d9296dc30877e5ab7cdfa5e82b5cce7007fc5acb52fd645ba8850cbe95e7a8"
 dependencies = [
  "base64",
  "indexmap",

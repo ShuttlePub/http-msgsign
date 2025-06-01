@@ -5,7 +5,7 @@ use crate::errors::{ExtractHeaderError, InvalidContentDigest};
 
 pub const CONTENT_DIGEST: &str = "content-digest";
 
-pub struct ContentDigest(HashMap<String, DigestHash>);
+pub(crate) struct ContentDigest(HashMap<String, DigestHash>);
 
 impl ContentDigest {
     pub fn from_header(map: &http::HeaderMap) -> Result<ContentDigest, ExtractHeaderError> {

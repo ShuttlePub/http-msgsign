@@ -295,11 +295,11 @@ impl ValueSerializer for Sf {
         };
         
         let value = if let Ok(item) = sfv::Parser::new(&st).parse_item() {
-            Ok(item.serialize_value()?)
+            Ok(item.serialize_value())
         } else if let Ok(dict) = sfv::Parser::new(&st).parse_dictionary() {
-            Ok(dict.serialize_value()?)
+            Ok(dict.serialize_value().unwrap_or_default())
         } else if let Ok(list) = sfv::Parser::new(&st).parse_list() {
-            Ok(list.serialize_value()?)
+            Ok(list.serialize_value().unwrap_or_default())
         } else {
             Err(SerializeError::FailedParseToSfv)
         }?;
@@ -347,9 +347,9 @@ impl ValueSerializer for Key {
         
         let value = match entry {
             ListEntry::Item(item) => item.serialize_value(),
-            entry @ ListEntry::InnerList(_) => vec![entry].serialize_value()
-        }?;
-        
+            entry @ ListEntry::InnerList(_) => vec![entry].serialize_value().unwrap_or_default(),
+        };
+
         Ok(Value::String(value))
     }
 }

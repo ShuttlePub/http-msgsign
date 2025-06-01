@@ -1,31 +1,34 @@
 use std::convert::Infallible;
+
 use bytes::Bytes;
-use http::{header, Request, Response};
-use http_body_util::combinators::BoxBody;
+use http::{Request, Response, header};
 use http_body_util::Full;
-use rsa::pss::{SigningKey, VerifyingKey};
-use rsa::{RsaPrivateKey, RsaPublicKey};
-use rsa::pkcs8::{DecodePrivateKey, DecodePublicKey};
-use rsa::signature::{RandomizedSigner, SignatureEncoding, Verifier};
-use sha2::{Digest, Sha512};
+use http_body_util::combinators::BoxBody;
 use http_msgsign::components::Derive;
 use http_msgsign::digest::{ContentDigest, ContentHasher, DigestHash};
 use http_msgsign::errors::VerificationError;
 use http_msgsign::params;
-use http_msgsign::{BindRequest, ExchangeRecordSign, RequestSign, ResponseSign, SignatureParams, SignerKey, VerifierKey};
+use http_msgsign::{
+    BindRequest, ExchangeRecordSign, RequestSign, ResponseSign, SignatureParams, SignerKey,
+    VerifierKey,
+};
+use rsa::pkcs8::{DecodePrivateKey, DecodePublicKey};
+use rsa::pss::{SigningKey, VerifyingKey};
+use rsa::signature::{RandomizedSigner, SignatureEncoding, Verifier};
+use rsa::{RsaPrivateKey, RsaPublicKey};
+use sha2::{Digest, Sha512};
 
 pub struct Sha256Hasher;
 
 impl ContentHasher for Sha256Hasher {
-    const DIGEST_TYPE: &'static str = "sha-256";
-    
+    const DIGEST_ALG: &'static str = "sha-256";
+
     fn hash(content: &[u8]) -> DigestHash {
         let mut hasher = <sha2::Sha256 as Digest>::new();
         hasher.update(content);
         DigestHash::new(hasher.finalize().to_vec())
     }
 }
-
 
 pub struct RsaSignerKey(SigningKey<Sha512>);
 
@@ -39,11 +42,11 @@ impl Default for RsaSignerKey {
 
 impl SignerKey for RsaSignerKey {
     const ALGORITHM: &'static str = "RSASSA-PSS";
-    
+
     fn key_id(&self) -> String {
         "rsassa-pss-1".to_string()
     }
-    
+
     fn sign(&self, target: &[u8]) -> Vec<u8> {
         self.0
             .sign_with_rng(&mut rand::thread_rng(), target)
@@ -63,11 +66,11 @@ impl Default for RsaVerifierKey {
 
 impl VerifierKey for RsaVerifierKey {
     const ALGORITHM: &'static str = "RSASSA-PSS";
-    
+
     fn key_id(&self) -> String {
         "rsassa-pss-1".to_string()
     }
-    
+
     fn verify(&self, target: &[u8], signature: &[u8]) -> Result<(), VerificationError> {
         let signature = rsa::pss::Signature::try_from(signature).unwrap();
         self.0.verify(target, &signature).unwrap();
@@ -137,7 +140,7 @@ async fn sign_request_with_content_digest() {
     let param = create_signature_params_for_request();
     let request = request.sign(&signer, "sig", &param).await;
     assert!(request.is_ok());
-    
+
     let request = request.unwrap();
     println!("{:#?}", request);
 }
@@ -147,17 +150,17 @@ async fn verify_request_with_content_digest() {
     let request = create_request();
     let request = request.digest::<Sha256Hasher>().await;
     assert!(request.is_ok());
-    
-    let request = request.unwrap();    
+
+    let request = request.unwrap();
     let signer = RsaSignerKey::default();
     let param = create_signature_params_for_request();
     let request = request.sign(&signer, "sig", &param).await;
     assert!(request.is_ok());
-    
+
     let request = request.unwrap();
     let request = request.verify_digest::<Sha256Hasher>().await;
     assert!(request.is_ok());
-    
+
     let request = request.unwrap();
     let verifier = RsaVerifierKey::default();
     let request = request.verify_sign(&verifier, "sig").await;
@@ -172,7 +175,7 @@ async fn sign_response_with_content_digest() {
     let param = create_signature_params_for_response();
     let response = response.sign(&signer, "sig", &param).await;
     assert!(response.is_ok());
-    
+
     let response = response.unwrap();
     println!("{:#?}", response);
 }
@@ -182,13 +185,13 @@ async fn verify_response_with_content_digest() {
     let response = create_response();
     let response = response.digest::<Sha256Hasher>().await;
     assert!(response.is_ok());
-    
+
     let response = response.unwrap();
     let signer = RsaSignerKey::default();
     let param = create_signature_params_for_response();
     let response = response.sign(&signer, "sig", &param).await;
     assert!(response.is_ok());
-    
+
     let response = response.unwrap();
     let verifier = RsaVerifierKey::default();
     let response = response.verify_sign(&verifier, "sig").await;
@@ -201,13 +204,13 @@ async fn sign_exchange_record_with_content_digest() {
     let request = request.digest::<Sha256Hasher>().await.unwrap();
     let response = create_response();
     let response = response.digest::<Sha256Hasher>().await.unwrap();
-    
+
     let signer = RsaSignerKey::default();
     let param = create_signature_params_for_record();
     let record = response.bind_request(&request);
     let record = record.sign(&signer, "sig", &param).await;
     assert!(record.is_ok());
-    
+
     let exchange_record = record.unwrap();
     println!("{:#?}", exchange_record);
 }
@@ -217,19 +220,19 @@ async fn verify_exchange_record_with_content_digest() {
     let request = create_request();
     let request = request.digest::<Sha256Hasher>().await;
     assert!(request.is_ok());
-    
+
     let request = request.unwrap();
     let response = create_response();
     let response = response.digest::<Sha256Hasher>().await;
     assert!(response.is_ok());
-    
+
     let response = response.unwrap();
     let signer = RsaSignerKey::default();
     let param = create_signature_params_for_record();
     let record = response.bind_request(&request);
     let record = record.sign(&signer, "sig", &param).await;
     assert!(record.is_ok());
-    
+
     let exchange_record = record.unwrap();
     let verifier = RsaVerifierKey::default();
     let exchange_record = exchange_record.verify_sign(&verifier, "sig").await;

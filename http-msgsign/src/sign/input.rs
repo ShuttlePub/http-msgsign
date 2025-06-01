@@ -11,7 +11,8 @@ pub struct InputProfiles(HashMap<String, SignatureInput>);
 
 impl InputProfiles {
     pub fn get(self, label: &str) -> Option<SignatureInput> {
-        self.0.into_iter()
+        self.0
+            .into_iter()
             .find(|(key, _)| key.eq(label))
             .map(|(_, input)| input)
     }
@@ -29,9 +30,7 @@ pub struct SignatureInput {
 }
 
 impl SignatureInput {
-    pub fn from_header(
-        header: &http::HeaderMap,
-    ) -> Result<InputProfiles, SignatureInputError> {
+    pub fn from_header(header: &http::HeaderMap) -> Result<InputProfiles, SignatureInputError> {
         let Some(input) = header.get(crate::sign::header::SIGNATURE_INPUT) else {
             return Err(SignatureInputError::NotExistInHeader);
         };

@@ -23,7 +23,7 @@ pub enum SignatureParamsError {
     #[error(transparent)]
     InvalidHeaderName(#[from] http::Error),
     #[error(transparent)]
-    InvalidParameter(#[from] InvalidSerializer)
+    InvalidParameter(#[from] InvalidSerializer),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -48,12 +48,12 @@ pub enum InvalidFormat {
 pub enum InvalidSerializer {
     #[error("{0} is duplicated. Parameter keys must always be unique.")]
     Duplicated(String),
-    
+
     #[error("`{interrogator}` does not correspond to {reject}.")]
     Incompatible {
         interrogator: &'static str,
-        reject: String
-    }
+        reject: String,
+    },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -72,8 +72,7 @@ pub enum SerializeError {
     #[error("Cannot be parsed as SFV format.")]
     FailedParseToSfv,
     #[error(transparent)]
-    InvalidFormat(#[from] InvalidFormat)
-    
+    InvalidFormat(#[from] InvalidFormat),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -87,9 +86,7 @@ pub struct InvalidComponentParameter(pub sfv::Key, pub sfv::BareItem);
 #[derive(Debug, thiserror::Error)]
 pub enum HttpComponentError {
     #[error("Incorrect data type. expect: {expect}")]
-    InvalidDataType {
-        expect: &'static str,
-    },
+    InvalidDataType { expect: &'static str },
     #[error(transparent)]
     FailedSerializeValue(#[from] SerializeError),
     #[error("Necessary requirement have not been met. {reason}")]

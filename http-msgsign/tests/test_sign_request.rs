@@ -1,9 +1,9 @@
 use std::convert::Infallible;
 
 use bytes::Bytes;
-use http::{header, Request};
-use http_body_util::combinators::BoxBody;
+use http::{Request, header};
 use http_body_util::Full;
+use http_body_util::combinators::BoxBody;
 use http_msgsign::components::Derive;
 use http_msgsign::errors::VerificationError;
 use http_msgsign::params;
@@ -72,6 +72,7 @@ pub fn create_request() -> Request<BoxBody<Bytes, Infallible>> {
         .uri("https://example.com/")
         .header("date", "Tue, 07 Jun 2014 20:51:35 GMT")
         .header("content-type", "application/json")
+        .header("x-empty-header", "")
         .body(BoxBody::new(create_body()))
         .unwrap()
 }
@@ -81,10 +82,10 @@ pub fn create_signature_params() -> SignatureParams {
         .add_derive(Derive::Method, params![])
         .add_header(header::DATE, params![])
         .add_header(header::CONTENT_TYPE, params![])
+        .add_header("x-empty-header", params![])
         .build()
         .unwrap()
 }
-
 
 #[tokio::test]
 async fn sign_request() {

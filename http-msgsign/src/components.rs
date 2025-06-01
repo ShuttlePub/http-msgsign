@@ -32,24 +32,33 @@ impl Display for HttpComponent {
 }
 
 pub trait ToComponent {
-    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError>;
+    fn to_component(&self, target_field: &TargetField)
+    -> Result<HttpComponent, HttpComponentError>;
 }
 
-
 impl<B> ToComponent for Request<B> {
-    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError> {
+    fn to_component(
+        &self,
+        target_field: &TargetField,
+    ) -> Result<HttpComponent, HttpComponentError> {
         target_field.seek_request(self)
     }
 }
 
 impl<B> ToComponent for Response<B> {
-    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError> {
+    fn to_component(
+        &self,
+        target_field: &TargetField,
+    ) -> Result<HttpComponent, HttpComponentError> {
         target_field.seek_response(self)
     }
 }
 
 impl<Req, Res> ToComponent for ExchangeRecord<'_, Req, Res> {
-    fn to_component(&self, target_field: &TargetField) -> Result<HttpComponent, HttpComponentError> {
+    fn to_component(
+        &self,
+        target_field: &TargetField,
+    ) -> Result<HttpComponent, HttpComponentError> {
         target_field.seek_record(self)
     }
 }

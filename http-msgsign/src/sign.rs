@@ -10,13 +10,7 @@ pub mod header {
     pub const SIGNATURE_INPUT: &str = "signature-input";
 }
 
-pub use self::{
-    base::SignatureBase,
-    input::*,
-    params::SignatureParams,
-    request::*, 
-    response::*,
-};
+pub use self::{base::SignatureBase, input::*, params::SignatureParams, request::*, response::*};
 
 pub trait SignerKey: 'static + Sync + Send {
     const ALGORITHM: &'static str;

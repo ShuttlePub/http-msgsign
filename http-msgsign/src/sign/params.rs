@@ -67,7 +67,7 @@ impl SignatureParams {
 
         Ok(components)
     }
-    
+
     pub fn record_to_component<Req, Res>(
         &self,
         record: &ExchangeRecord<Req, Res>,
@@ -134,7 +134,7 @@ impl KeyPropertyLoadedSignatureParams<'_> {
 
         Ok(components)
     }
-    
+
     pub fn record_to_component<Req, Res>(
         &self,
         record: &ExchangeRecord<Req, Res>,
@@ -272,7 +272,8 @@ impl Builder {
             Ok(sign_params)
         })
     }
-
+    
+    // Fixme: This can only be made at the time when SignatureParam is defined.
     /// `expires`: Expiration time as a UNIX timestamp value of type Integer.  
     /// Sub-second precision is not supported.
     ///
@@ -325,6 +326,7 @@ impl Builder {
         })
     }
 
+    // Fixme: This can only be made at the time when SignatureParam is defined.
     pub fn set_created(self, created: impl Into<u64>) -> Self {
         self.and_then(|mut sign_params| {
             sign_params.created = Some(created.into());

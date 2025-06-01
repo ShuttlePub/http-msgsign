@@ -3,6 +3,7 @@ use crate::sign::signature::Signatures;
 use crate::sign::{SignatureBase, SignatureInput, SignatureParams, SignerKey, VerifierKey};
 use http::Request;
 
+//noinspection DuplicatedCode
 pub trait RequestSign {
     fn sign<S: SignerKey>(
         self,

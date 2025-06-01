@@ -1,9 +1,9 @@
-use std::collections::HashSet;
-use std::fmt::{Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
 use indexmap::IndexMap;
 use sfv::ListEntry;
 use sfv::SerializeValue;
+use std::collections::HashSet;
+use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 
 use crate::base64::Base64EncodedString;
 use crate::components::values::Value;
@@ -11,19 +11,31 @@ use crate::errors::{InvalidComponentParameter, InvalidFormat, InvalidSerializer,
 
 pub mod param {
     use crate::components::params::{Bs, Key, Name, Req, Sf, Tr};
-    
-    pub fn key(key: impl Into<String>) -> Key { Key(key.into()) }
-    pub fn name(name: impl Into<String>) -> Name { Name(name.into()) }
-    pub const fn sf() -> Sf { Sf }
-    pub const fn bs() -> Bs { Bs }
-    pub const fn tr() -> Tr { Tr }
-    pub const fn req() -> Req { Req }
+
+    pub fn key(key: impl Into<String>) -> Key {
+        Key(key.into())
+    }
+    pub fn name(name: impl Into<String>) -> Name {
+        Name(name.into())
+    }
+    pub const fn sf() -> Sf {
+        Sf
+    }
+    pub const fn bs() -> Bs {
+        Bs
+    }
+    pub const fn tr() -> Tr {
+        Tr
+    }
+    pub const fn req() -> Req {
+        Req
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Serializer {
     methods: IndexMap<String, SerializerType>,
-    require_request: bool
+    require_request: bool,
 }
 
 impl Hash for Serializer {
@@ -39,11 +51,11 @@ impl Serializer {
         }
         Ok(value)
     }
-    
+
     pub fn require_request(&self) -> bool {
         self.require_request
     }
-    
+
     pub fn name(&self) -> Option<&str> {
         let Some(SerializerType::Name(name)) = self.methods.get(Name::IDENT) else {
             return None;
@@ -54,7 +66,9 @@ impl Serializer {
 
 impl Display for Serializer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let p = self.methods.iter()
+        let p = self
+            .methods
+            .iter()
             .map(|(_, ser)| ser.to_string())
             .collect::<Vec<_>>()
             .join("");
@@ -81,41 +95,41 @@ macro_rules! params {
 }
 
 pub struct FieldParameter {
-    builder: Result<Serializer, InvalidSerializer>
+    builder: Result<Serializer, InvalidSerializer>,
 }
 
 impl Default for FieldParameter {
     fn default() -> Self {
         Self {
-            builder: Ok(Serializer { 
+            builder: Ok(Serializer {
                 methods: IndexMap::new(),
                 require_request: false,
-            })
+            }),
         }
     }
 }
 
 impl FieldParameter {
-    pub fn add_param<P>(self, param: P) -> Self 
+    pub fn add_param<P>(self, param: P) -> Self
     where
-        P: Into<SerializerType> + DefinedParam
+        P: Into<SerializerType> + DefinedParam,
     {
         self.and_then(|mut ser| {
             let ident = P::IDENT;
             let param = param.into();
-            
+
             if let SerializerType::Req(_) = param {
                 ser.require_request = true;
             }
-            
+
             if ser.methods.insert(ident.to_string(), param).is_some() {
-                return Err(InvalidSerializer::Duplicated(ident.to_string()))
+                return Err(InvalidSerializer::Duplicated(ident.to_string()));
             }
-            
+
             Ok(ser)
         })
     }
-    
+
     pub fn into_serializer(self) -> Result<Serializer, InvalidSerializer> {
         self.builder.and_then(|ser| {
             let methods = &ser.methods;
@@ -152,7 +166,7 @@ impl FieldParameter {
             Ok(ser)
         })
     }
-    
+
     // Helper
     fn and_then<F>(self, f: F) -> Self
     where
@@ -166,25 +180,25 @@ impl FieldParameter {
 
 impl TryFrom<sfv::Parameters> for Serializer {
     type Error = InvalidSerializer;
-    
+
     fn try_from(value: sfv::Parameters) -> Result<Self, Self::Error> {
-        let ser = value.into_iter()
+        let ser = value
+            .into_iter()
             .map(SerializerType::try_from)
-            .flat_map(|ser| {
-                match ser {
-                    Ok(ser) => Ok((ser.as_str().to_string(), ser)),
-                    Err(err) => Err(err)
-                }
+            .flat_map(|ser| match ser {
+                Ok(ser) => Ok((ser.as_str().to_string(), ser)),
+                Err(err) => Err(err),
             })
             .collect::<IndexMap<_, _>>();
-        
+
         let require_request = ser.contains_key(Req::IDENT);
-        
-        Ok(Self { methods: ser, require_request })
+
+        Ok(Self {
+            methods: ser,
+            require_request,
+        })
     }
 }
-
-
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum SerializerType {
@@ -193,7 +207,7 @@ pub enum SerializerType {
     Bs(Bs),
     Tr(Tr),
     Req(Req),
-    Name(Name)
+    Name(Name),
 }
 
 impl SerializerType {
@@ -202,18 +216,18 @@ impl SerializerType {
             SerializerType::Sf(_) => &["key", "bs"],
             SerializerType::Key(_) => &["sf", "bs"],
             SerializerType::Bs(_) => &["sf", "key"],
-            _ => &[]
+            _ => &[],
         }
     }
-    
+
     pub const fn as_str(&self) -> &'static str {
-        match self { 
+        match self {
             SerializerType::Sf(_) => "sf",
             SerializerType::Key(_) => "key",
             SerializerType::Bs(_) => "bs",
             SerializerType::Tr(_) => "tr",
             SerializerType::Req(_) => "req",
-            SerializerType::Name(_) => "name"
+            SerializerType::Name(_) => "name",
         }
     }
 }
@@ -237,14 +251,14 @@ impl ValueSerializer for SerializerType {
             SerializerType::Sf(ser) => ser.serialize(value),
             SerializerType::Key(ser) => ser.serialize(value),
             SerializerType::Bs(ser) => ser.serialize(value),
-            _ => { Ok(value) }
+            _ => Ok(value),
         }
     }
 }
 
 impl TryFrom<(sfv::Key, sfv::BareItem)> for SerializerType {
     type Error = InvalidComponentParameter;
-    
+
     fn try_from((key, item): (sfv::Key, sfv::BareItem)) -> Result<Self, Self::Error> {
         match (key.as_str(), item) {
             ("sf", sfv::BareItem::Boolean(bool)) if bool => Ok(Self::Sf(Sf)),
@@ -291,9 +305,9 @@ impl ValueSerializer for Sf {
             return Err(SerializeError::InvalidSerializableValue {
                 param_type: ";sf".to_string(),
                 current_type: "ByteSequence",
-            })
+            });
         };
-        
+
         let value = if let Ok(item) = sfv::Parser::new(&st).parse_item() {
             Ok(item.serialize_value())
         } else if let Ok(dict) = sfv::Parser::new(&st).parse_dictionary() {
@@ -303,7 +317,7 @@ impl ValueSerializer for Sf {
         } else {
             Err(SerializeError::FailedParseToSfv)
         }?;
-        
+
         Ok(Value::String(value))
     }
 }
@@ -334,17 +348,17 @@ impl ValueSerializer for Key {
             return Err(SerializeError::InvalidSerializableValue {
                 param_type: format!(";key=\"{}\"", self.0),
                 current_type: "ByteSequence",
-            })
+            });
         };
-        
+
         let mut dict = sfv::Parser::new(&st)
             .parse_dictionary()
             .map_err(InvalidFormat::Dictionary)?;
-        
+
         let Some(entry) = dict.shift_remove(key) else {
-            return Err(SerializeError::EntryNotExistsInDictionary(key.to_string()))
+            return Err(SerializeError::EntryNotExistsInDictionary(key.to_string()));
         };
-        
+
         let value = match entry {
             ListEntry::Item(item) => item.serialize_value(),
             entry @ ListEntry::InnerList(_) => vec![entry].serialize_value().unwrap_or_default(),
@@ -377,18 +391,18 @@ impl ValueSerializer for Bs {
     fn serialize(&self, value: Value) -> Result<Value, SerializeError> {
         let byte_seq = match value {
             Value::String(st) => vec![Base64EncodedString::new(st)],
-            Value::BytesList(list) => {
-                list.into_iter()
-                    .map(Base64EncodedString::new)
-                    .collect::<Vec<_>>()
-            }
+            Value::BytesList(list) => list
+                .into_iter()
+                .map(Base64EncodedString::new)
+                .collect::<Vec<_>>(),
         };
-        
-        let value = byte_seq.into_iter()
+
+        let value = byte_seq
+            .into_iter()
             .map(|seq| seq.to_sfv())
             .collect::<Vec<String>>()
             .join(", ");
-        
+
         Ok(Value::String(value))
     }
 }
@@ -453,31 +467,31 @@ impl DefinedParam for Name {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn test_incompatible_serializers() {
         let ser = params![sf, bs].into_serializer();
         assert!(ser.is_err());
-        
+
         let ser = params![key("a"), sf].into_serializer();
         assert!(ser.is_err());
-        
+
         let ser = params![key("a"), bs].into_serializer();
         assert!(ser.is_err());
-        
+
         let ser = params![key("a"), sf, bs].into_serializer();
         assert!(ser.is_err());
-        
+
         let ser = params![key("a")].into_serializer();
         assert!(ser.is_ok());
     }
-    
+
     #[test]
     #[should_panic]
     fn test_duplicated_serializers() {
         let _ = params![sf, sf].into_serializer().unwrap();
     }
-    
+
     #[test]
     #[should_panic]
     fn test_report_incompatible_serializers() {
@@ -492,7 +506,7 @@ mod test {
         let Value::String(visible) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-        
+
         // Normalized to List in sf-list.
         assert_eq!(visible, r#""london", "berlin""#);
     }
@@ -500,48 +514,48 @@ mod test {
     #[test]
     fn test_key_serializer() {
         let dict = Value::String(r#" a=1, b=2;x=1;y=2, c=(a   b    c);valid, d"#.to_string());
-    
+
         // extract key=`a` from dict
         let ser = params![key("a")].into_serializer().unwrap();
         let val = ser.serialize(dict.clone()).unwrap();
         let Value::String(visible) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-    
+
         // it's mean integer in sf-integer
         assert_eq!(visible, r#"1"#);
-    
+
         // extract key=`b` from dict
         let ser = params![key("b")].into_serializer().unwrap();
         let val = ser.serialize(dict.clone()).unwrap();
         let Value::String(visible) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-    
+
         // it's mean integer(2) with parameters x=1, y=2
         assert_eq!(visible, r#"2;x=1;y=2"#);
-    
+
         // extract key=`c` from dict
         let ser = params![key("c")].into_serializer().unwrap();
         let val = ser.serialize(dict.clone()).unwrap();
         let Value::String(visible) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-    
+
         // it's mean inner-list in sfv
         assert_eq!(visible, r#"(a b c);valid"#);
-    
+
         // extract key=`d` from dict
         let ser = params![key("d")].into_serializer().unwrap();
         let val = ser.serialize(dict.clone()).unwrap();
         let Value::String(visible) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-    
+
         // it's mean true in sf-boolean
         assert_eq!(visible, "?1");
     }
-    
+
     //noinspection SpellCheckingInspection
     #[test]
     fn test_bs_serializer() {
@@ -551,11 +565,11 @@ mod test {
         let Value::String(val) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-    
+
         // it's mean ByteSequence(Base64) in sf-byte-sequence
         assert_eq!(val, ":dmFsdWUsIHdpdGgsIGxvdHMsIG9mLCBjb21tYXM=:");
     }
-    
+
     //noinspection SpellCheckingInspection
     #[test]
     fn test_nothing_operation_param() {
@@ -565,18 +579,18 @@ mod test {
         let Value::String(val) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-    
+
         // If you've read RFC9421, this test will seem a bit odd.
         // You would think that the whitespace on both ends should be gone,
         // but rest assured that it is done when the values from the HeaderMap are normalized.
         assert_eq!(val, r#" "london",   "berlin" "#);
-        
+
         let ser = params![req].into_serializer().unwrap();
         let val = ser.serialize(list.clone()).unwrap();
         let Value::String(val) = val else {
             panic!("Expected String, but got {:?}", val);
         };
-        
+
         assert_eq!(val, r#" "london",   "berlin" "#);
     }
 }

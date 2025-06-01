@@ -1,17 +1,20 @@
 use std::convert::Infallible;
+
 use bytes::Bytes;
-use http::{header, Request, Response};
-use http_body_util::combinators::BoxBody;
+use http::{Request, Response, header};
 use http_body_util::Full;
-use rsa::pss::{SigningKey, VerifyingKey};
-use rsa::{RsaPrivateKey, RsaPublicKey};
-use rsa::pkcs8::{DecodePrivateKey, DecodePublicKey};
-use rsa::signature::{RandomizedSigner, SignatureEncoding, Verifier};
-use sha2::Sha512;
+use http_body_util::combinators::BoxBody;
 use http_msgsign::components::Derive;
 use http_msgsign::errors::VerificationError;
 use http_msgsign::params;
-use http_msgsign::{BindRequest, ExchangeRecordSign, ResponseSign, SignatureParams, SignerKey, VerifierKey};
+use http_msgsign::{
+    BindRequest, ExchangeRecordSign, ResponseSign, SignatureParams, SignerKey, VerifierKey,
+};
+use rsa::pkcs8::{DecodePrivateKey, DecodePublicKey};
+use rsa::pss::{SigningKey, VerifyingKey};
+use rsa::signature::{RandomizedSigner, SignatureEncoding, Verifier};
+use rsa::{RsaPrivateKey, RsaPublicKey};
+use sha2::Sha512;
 
 pub struct RsaSignerKey(SigningKey<Sha512>);
 
@@ -25,11 +28,11 @@ impl Default for RsaSignerKey {
 
 impl SignerKey for RsaSignerKey {
     const ALGORITHM: &'static str = "RSASSA-PSS";
-    
+
     fn key_id(&self) -> String {
         "rsassa-pss-1".to_string()
     }
-    
+
     fn sign(&self, target: &[u8]) -> Vec<u8> {
         self.0
             .sign_with_rng(&mut rand::thread_rng(), target)
@@ -49,11 +52,11 @@ impl Default for RsaVerifierKey {
 
 impl VerifierKey for RsaVerifierKey {
     const ALGORITHM: &'static str = "RSASSA-PSS";
-    
+
     fn key_id(&self) -> String {
         "rsassa-pss-1".to_string()
     }
-    
+
     fn verify(&self, target: &[u8], signature: &[u8]) -> Result<(), VerificationError> {
         let signature = rsa::pss::Signature::try_from(signature).unwrap();
         self.0.verify(target, &signature).unwrap();
@@ -103,7 +106,6 @@ pub fn create_signature_params_for_record() -> SignatureParams {
         .unwrap()
 }
 
-
 #[tokio::test]
 async fn sign_response() {
     let response = create_response();
@@ -111,7 +113,7 @@ async fn sign_response() {
     let params = create_signature_params();
     let response = response.sign(&signer, "sig", &params).await;
     assert!(response.is_ok());
-    
+
     let response = response.unwrap();
     println!("{:#?}", response);
 }
@@ -123,7 +125,7 @@ async fn verify_response() {
     let params = create_signature_params();
     let response = response.sign(&signer, "sig", &params).await;
     assert!(response.is_ok());
-    
+
     let verifier = RsaVerifierKey::default();
     let response = response.unwrap();
     let response = response.verify_sign(&verifier, "sig").await;
@@ -139,7 +141,7 @@ async fn sign_exchange_record() {
     let params = create_signature_params_for_record();
     let record = record.sign(&signer, "sig", &params).await;
     assert!(record.is_ok());
-    
+
     let record = record.unwrap();
     println!("{:#?}", record);
 }
@@ -153,7 +155,7 @@ async fn verify_exchange_record() {
     let params = create_signature_params_for_record();
     let record = record.sign(&signer, "sig", &params).await;
     assert!(record.is_ok());
-    
+
     let verifier = RsaVerifierKey::default();
     let record = record.unwrap();
     let record = record.verify_sign(&verifier, "sig").await;

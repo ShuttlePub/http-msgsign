@@ -32,9 +32,7 @@ impl<'a> SignatureBase<'a> {
     ) -> Result<Self, HttpComponentError> {
         Ok(Self {
             params,
-            covered: params
-                .load_signer_key(key)
-                .request_to_component(request)?,
+            covered: params.load_signer_key(key).request_to_component(request)?,
         })
     }
 
@@ -60,18 +58,17 @@ impl<'a> SignatureBase<'a> {
                 .response_to_component(response)?,
         })
     }
-    
+
     pub fn from_exchange_record<Req, Res>(
         exchange_record: &ExchangeRecord<Req, Res>,
         params: &'a SignatureParams,
     ) -> Result<Self, HttpComponentError> {
         Ok(Self {
             params,
-            covered: params
-                .record_to_component(exchange_record)?,
+            covered: params.record_to_component(exchange_record)?,
         })
     }
-    
+
     pub fn from_exchange_record_with_signer_key<Req, Res>(
         exchange_record: &ExchangeRecord<Req, Res>,
         params: &'a SignatureParams,
@@ -105,7 +102,11 @@ impl<'a> SignatureBase<'a> {
         Base64EncodedString::new(signer.sign(self.to_string().as_bytes()))
     }
 
-    pub fn verify(&self, verifier: &impl VerifierKey, signature: &[u8]) -> Result<(), VerificationError> { 
+    pub fn verify(
+        &self,
+        verifier: &impl VerifierKey,
+        signature: &[u8],
+    ) -> Result<(), VerificationError> {
         verifier.verify(self.to_string().as_bytes(), signature)
     }
 }

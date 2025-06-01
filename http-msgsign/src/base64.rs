@@ -13,7 +13,7 @@ impl Base64EncodedString {
     pub fn decode(&self) -> Result<Vec<u8>, base64::DecodeError> {
         base64::engine::general_purpose::STANDARD.decode(&self.0)
     }
-    
+
     pub fn to_sfv(&self) -> String {
         format!(":{}:", self.0)
     }

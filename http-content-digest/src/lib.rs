@@ -1,5 +1,5 @@
 mod base64;
-pub mod errors;
 mod digest;
+pub mod errors;
 
 pub use self::digest::*;

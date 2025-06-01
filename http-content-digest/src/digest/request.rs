@@ -4,9 +4,9 @@ use http_body_util::combinators::BoxBody;
 use http_body_util::{BodyExt, Full};
 
 use super::ContentDigest;
+use crate::digest::header::{self, CONTENT_DIGEST};
 use crate::digest::{BodyDigest, ContentHasher};
 use crate::errors::DigestError;
-use crate::digest::header::{self, CONTENT_DIGEST};
 
 impl<B> ContentDigest for Request<B>
 where
@@ -38,7 +38,7 @@ where
         let (parts, body) = self.into_parts();
         let Some(expect) = header::ContentDigest::from_header(&parts.headers)?.find(H::DIGEST_ALG)
         else {
-            return Err(DigestError::AlgorithmNotSupported)
+            return Err(DigestError::AlgorithmNotSupported);
         };
 
         let actual = body.digest::<H>().await.map_err(|_e| DigestError::Body)?;

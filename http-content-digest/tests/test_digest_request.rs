@@ -1,15 +1,16 @@
+use std::convert::Infallible;
+
 use bytes::Bytes;
 use http::Request;
 use http_body_util::Full;
 use http_body_util::combinators::BoxBody;
-use sha2::Digest;
-use std::convert::Infallible;
 use http_content_digest::{ContentHasher, DigestHash};
+use sha2::Digest;
 
 pub struct Sha256Hasher;
 
 impl ContentHasher for Sha256Hasher {
-    const DIGEST_TYPE: &'static str = "sha-256";
+    const DIGEST_ALG: &'static str = "sha-256";
 
     fn hash(content: &[u8]) -> DigestHash {
         let mut hasher = <sha2::Sha256 as Digest>::new();

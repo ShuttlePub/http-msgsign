@@ -1,16 +1,17 @@
 use std::convert::Infallible;
+
 use bytes::Bytes;
 use http::{Response, StatusCode};
-use http_body_util::combinators::BoxBody;
 use http_body_util::Full;
-use sha2::Digest;
+use http_body_util::combinators::BoxBody;
 use http_content_digest::{ContentDigest, ContentHasher, DigestHash};
+use sha2::Digest;
 
 pub struct Sha256Hasher;
 
 impl ContentHasher for Sha256Hasher {
-    const DIGEST_TYPE: &'static str = "sha-256";
-    
+    const DIGEST_ALG: &'static str = "sha-256";
+
     fn hash(content: &[u8]) -> DigestHash {
         let mut hasher = <sha2::Sha256 as Digest>::new();
         hasher.update(content);
@@ -31,27 +32,26 @@ pub fn create_response() -> Response<BoxBody<Bytes, Infallible>> {
         .unwrap()
 }
 
-
 //noinspection SpellCheckingInspection
 #[tokio::test]
 async fn digest() {
     let res = create_response();
     let res = res.digest::<Sha256Hasher>().await;
-    
+
     assert!(res.is_ok());
-    
+
     let res = res.unwrap();
     assert!(res.headers().contains_key("content-digest"));
-    
+
     println!("{:#?}", res);
-    
-    let digest = res.headers()
+
+    let digest = res
+        .headers()
         .get("content-digest")
         .unwrap()
         .to_str()
         .unwrap();
-    
-    
+
     assert_eq!(
         digest,
         "sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:"
@@ -64,7 +64,7 @@ async fn verify() {
     let res = create_response();
     let res = res.digest::<Sha256Hasher>().await;
     let res = res.unwrap();
-    
+
     let res = res.verify_digest::<Sha256Hasher>().await;
     assert!(res.is_ok())
 }

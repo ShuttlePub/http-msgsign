@@ -21,7 +21,7 @@ impl DigestHash {
 }
 
 pub trait ContentHasher: 'static + Send + Sync {
-    const DIGEST_TYPE: &'static str;
+    const DIGEST_ALG: &'static str;
 
     fn hash(content: &[u8]) -> DigestHash;
 }

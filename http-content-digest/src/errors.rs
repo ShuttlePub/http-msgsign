@@ -41,3 +41,9 @@ impl From<sfv::Error> for ExtractHeaderError {
         ExtractHeaderError::InvalidHeaderValue(Box::new(e))
     }
 }
+
+impl From<base64::DecodeError> for ExtractHeaderError {
+    fn from(value: base64::DecodeError) -> Self {
+        Self::InvalidHeaderValue(Box::new(value))
+    }
+}

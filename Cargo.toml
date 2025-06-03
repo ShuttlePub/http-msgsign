@@ -20,3 +20,4 @@ thiserror = "^2"
 authors = ["RechellaTek <reirokusanami.rdh@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2024"
+repository = "https://github.com/ShuttlePub/http-msgsign"

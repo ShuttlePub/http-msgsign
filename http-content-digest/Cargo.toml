@@ -1,7 +1,7 @@
 [package]
 name = "http-content-digest"
 version = "0.1.0"
-description = "Give `Content-Digest` to Request/Response of `http` crate."
+description = "`Content-Digest` implementation to Request/Response of `http` crate."
 edition = { workspace = true }
 authors = { workspace = true }
 license = { workspace = true }

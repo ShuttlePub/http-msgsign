@@ -1,6 +1,6 @@
 [package]
 name = "http-content-digest"
-version = "0.1.0"
+version = "0.1.1"
 description = "`Content-Digest` implementation to Request/Response of `http` crate."
 repository = { workspace = true }
 edition = { workspace = true }

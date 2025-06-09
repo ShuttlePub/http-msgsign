@@ -36,15 +36,17 @@ pub fn create_request() -> Request<BoxBody<Bytes, Infallible>> {
 
 #[tokio::main]
 async fn main() {
+    let request = create_request();    
+    
     // Digest of `Request<B>` can be done with this, 
     // but note that after execution it becomes `Request<BoxBody<Bytes, DigestError>>`.
     // This is because Content-Digest is expected to be 
     // the last processing of the request or response.
     let request: Request<BoxBody<Bytes, DigestError>> = request.digest::<Sha256Hasher>().await.unwrap();
     
-    assert!(req.headers().contains_key("content-digest"));
+    assert!(request.headers().contains_key("content-digest"));
     
-    let digest = req.headers().get("content-digest").unwrap().to_str().unwrap();
+    let digest = request.headers().get("content-digest").unwrap().to_str().unwrap();
     
     assert_eq!(digest, "sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:");
 }

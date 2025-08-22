@@ -23,7 +23,7 @@ pub(crate) enum TimeOrDuration {
 
 impl TargetField {
     //noinspection DuplicatedCode
-    pub fn seek_request<B>(
+    pub(crate) fn seek_request<B>(
         &self,
         request: &Request<B>,
     ) -> Result<SignBaseComponent, HttpPayloadSeekError> {
@@ -78,7 +78,7 @@ impl TargetField {
     }
 
     //noinspection DuplicatedCode
-    pub fn seek_response<B>(
+    pub(crate) fn seek_response<B>(
         &self,
         response: &Response<B>,
     ) -> Result<SignBaseComponent, HttpPayloadSeekError> {

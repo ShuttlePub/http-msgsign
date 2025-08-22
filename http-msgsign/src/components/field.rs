@@ -29,7 +29,7 @@ impl TargetField {
         })
     }
 
-    pub fn seek_request<B>(
+    pub(crate) fn seek_request<B>(
         &self,
         request: &Request<B>,
     ) -> Result<HttpComponent, HttpComponentError> {
@@ -55,7 +55,7 @@ impl TargetField {
         }
     }
 
-    pub fn seek_response<B>(
+    pub(crate) fn seek_response<B>(
         &self,
         response: &Response<B>,
     ) -> Result<HttpComponent, HttpComponentError> {
@@ -81,7 +81,7 @@ impl TargetField {
         }
     }
 
-    pub fn seek_record<Req, Res>(
+    pub(crate) fn seek_record<Req, Res>(
         &self,
         ExchangeRecord { request, response }: &ExchangeRecord<Req, Res>,
     ) -> Result<HttpComponent, HttpComponentError> {

@@ -1,7 +1,7 @@
 [package]
 name = "http-msgsign"
 version = "0.1.0"
-description = "Provide RFC9421 HTTP Message Signature functionality to `http` crate."
+description = "Provide RFC9421 HTTP Message Signature functionality to http crate."
 repository = { workspace = true }
 authors = { workspace = true }
 license = { workspace = true }

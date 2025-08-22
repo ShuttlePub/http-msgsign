@@ -14,6 +14,7 @@ pub const SIGNATURE_PARAMS: &str = "@signature-params";
 pub struct SignatureParams {
     covered: IndexSet<TargetField>,
     created: Option<u64>,
+    gen_created: bool,
     expires: Option<u64>,
     algorithm: Option<String>,
     key_id: Option<String>,
@@ -29,6 +30,8 @@ pub struct KeyPropertyLoadedSignatureParams<'a> {
 }
 
 impl SignatureParams {
+    /// `created` is generated at [`SignatureParams::to_string`] called.  
+    /// This is because the specification recommends the inclusion of “created” so the process generates it by default.
     pub fn to_component(&self) -> HttpComponent {
         HttpComponent {
             id: format!("\"{SIGNATURE_PARAMS}\""),
@@ -164,6 +167,7 @@ impl From<SignatureInput> for SignatureParams {
         Self {
             covered: value.covered,
             created: value.created,
+            gen_created: false,
             expires: value.expires,
             algorithm: value.algorithm,
             key_id: value.key_id,
@@ -183,15 +187,23 @@ impl Display for SignatureParams {
                 format!("{acc} {id}")
             }
         });
-
+        
+        let at = SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .ok()
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        
         let mut base = format!("({})", covered);
-
-        if let Some(created) = self.created {
+        if self.gen_created {
+            base += &format!(";created={at}")
+        } else if let Some(created) = self.created {
             base += &format!(";created={created}");
         }
 
         if let Some(expires) = self.expires {
-            base += &format!(";expires={expires}");
+            let expires_at = at + expires;
+            base += &format!(";expires={expires_at}");
         }
 
         if let Some(algorithm) = &self.algorithm {
@@ -273,14 +285,13 @@ impl Builder {
         })
     }
     
-    // Fixme: This can only be made at the time when SignatureParam is defined.
     /// `expires`: Expiration time as a UNIX timestamp value of type Integer.  
     /// Sub-second precision is not supported.
     ///
     /// See [RFC9421 Signature Parameters §2.3-4.4](https://datatracker.ietf.org/doc/html/rfc9421#section-2.3-4.4)
-    pub fn set_expires(self, expires: impl Into<u64>) -> Self {
+    pub fn set_expires(self, duration_unix: impl Into<u64>) -> Self {
         self.and_then(|mut sign_params| {
-            sign_params.expires = Some(expires.into());
+            sign_params.expires = Some(duration_unix.into());
             Ok(sign_params)
         })
     }
@@ -325,36 +336,21 @@ impl Builder {
             Ok(sign_params)
         })
     }
-
-    // Fixme: This can only be made at the time when SignatureParam is defined.
-    pub fn set_created(self, created: impl Into<u64>) -> Self {
-        self.and_then(|mut sign_params| {
-            sign_params.created = Some(created.into());
-            Ok(sign_params)
-        })
-    }
-
-    /// `created` is generated at [`Builder::build`] called.  
-    /// This is because the specification recommends the inclusion of “created” so the process generates it by default.
-    ///
-    /// ---
-    ///
+    
     /// `created`: Creation time as a UNIX timestamp value of type Integer.  
     /// Sub-second precision is not supported.  
     /// The inclusion of this parameter is **RECOMMENDED**.  
     ///
     /// See [RFC9421 Signature Parameters §2.3-4.2](https://datatracker.ietf.org/doc/html/rfc9421#section-2.3-4.2)
-    pub fn build(self) -> Result<SignatureParams, SignatureParamsError> {
-        self.builder.map(|mut sign_params| {
-            if sign_params.created.is_none() {
-                let at = SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .ok()
-                    .map(|d| d.as_secs());
-                sign_params.created = at;
-            }
-            sign_params
+    pub fn gen_created(self) -> Self {
+        self.and_then(|mut sign_params| {
+            sign_params.gen_created = true;
+            Ok(sign_params)
         })
+    }
+
+    pub fn build(self) -> Result<SignatureParams, SignatureParamsError> {
+        self.builder
     }
 
     fn and_then<F>(self, f: F) -> Self
@@ -373,6 +369,7 @@ impl Default for Builder {
             builder: Ok(SignatureParams {
                 covered: IndexSet::new(),
                 created: None,
+                gen_created: false,
                 expires: None,
                 algorithm: None,
                 key_id: None,

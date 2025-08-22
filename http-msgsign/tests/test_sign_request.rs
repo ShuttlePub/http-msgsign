@@ -79,6 +79,7 @@ pub fn create_request() -> Request<BoxBody<Bytes, Infallible>> {
 
 pub fn create_signature_params() -> SignatureParams {
     SignatureParams::builder()
+        .gen_created()
         .add_derive(Derive::Method, params![])
         .add_header(header::DATE, params![])
         .add_header(header::CONTENT_TYPE, params![])

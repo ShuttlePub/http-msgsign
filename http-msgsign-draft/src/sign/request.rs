@@ -5,6 +5,9 @@ use http::Request;
 
 //noinspection DuplicatedCode
 pub trait RequestSign {
+    /// Write the signature to the HTTP header, `Signature`.
+    /// 
+    /// If you want to write to `Authorization` header, consider using [`RequestSign::proof`].
     fn sign<S: SignerKey>(
         self,
         key: &S,
@@ -12,7 +15,10 @@ pub trait RequestSign {
     ) -> impl Future<Output = Result<Self, SignError>> + Send
     where
         Self: Sized;
-
+    
+    /// Write the signature to the HTTP header, `Authorization`.
+    /// 
+    /// If you want to write to `Signature` header, consider using [`RequestSign::sign`].
     fn proof<S: SignerKey>(
         self,
         key: &S,

@@ -1,6 +1,5 @@
 use indexmap::IndexMap;
-use sfv::ListEntry;
-use sfv::SerializeValue;
+use sfv::{Dictionary, FieldType, Item, List, ListEntry};
 use std::collections::HashSet;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -308,12 +307,12 @@ impl ValueSerializer for Sf {
             });
         };
 
-        let value = if let Ok(item) = sfv::Parser::new(&st).parse_item() {
-            Ok(item.serialize_value())
-        } else if let Ok(dict) = sfv::Parser::new(&st).parse_dictionary() {
-            Ok(dict.serialize_value().unwrap_or_default())
-        } else if let Ok(list) = sfv::Parser::new(&st).parse_list() {
-            Ok(list.serialize_value().unwrap_or_default())
+        let value = if let Ok(item) = sfv::Parser::new(&st).parse::<Item>() {
+            Ok(item.serialize())
+        } else if let Ok(dict) = sfv::Parser::new(&st).parse::<Dictionary>() {
+            Ok(dict.serialize().unwrap_or_default())
+        } else if let Ok(list) = sfv::Parser::new(&st).parse::<List>() {
+            Ok(list.serialize().unwrap_or_default())
         } else {
             Err(SerializeError::FailedParseToSfv)
         }?;
@@ -352,7 +351,7 @@ impl ValueSerializer for Key {
         };
 
         let mut dict = sfv::Parser::new(&st)
-            .parse_dictionary()
+            .parse::<Dictionary>()
             .map_err(InvalidFormat::Dictionary)?;
 
         let Some(entry) = dict.shift_remove(key) else {
@@ -360,8 +359,8 @@ impl ValueSerializer for Key {
         };
 
         let value = match entry {
-            ListEntry::Item(item) => item.serialize_value(),
-            entry @ ListEntry::InnerList(_) => vec![entry].serialize_value().unwrap_or_default(),
+            ListEntry::Item(item) => item.serialize(),
+            entry @ ListEntry::InnerList(_) => vec![entry].serialize().unwrap_or_default(),
         };
 
         Ok(Value::String(value))

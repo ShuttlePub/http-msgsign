@@ -510,9 +510,9 @@ checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
 
 [[package]]
 name = "sfv"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8d9296dc30877e5ab7cdfa5e82b5cce7007fc5acb52fd645ba8850cbe95e7a8"
+checksum = "0d471eaefb14f4b30032525bdb124b36e55ba9cb1292080e06f1a236cd10fe87"
 dependencies = [
  "base64",
  "indexmap",

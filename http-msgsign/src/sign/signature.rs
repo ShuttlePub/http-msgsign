@@ -1,5 +1,5 @@
 use crate::errors::{InvalidFormat, SignatureError};
-use sfv::{BareItem, Item, ListEntry};
+use sfv::{BareItem, Dictionary, Item, ListEntry};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -13,7 +13,7 @@ impl Signatures {
 
         let mut signatures = HashMap::new();
         for (key, signature) in sfv::Parser::new(signature.as_bytes())
-            .parse_dictionary()
+            .parse::<Dictionary>()
             .unwrap()
         {
             let ListEntry::Item(Item {

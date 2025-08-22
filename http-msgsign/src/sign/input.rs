@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use indexmap::IndexSet;
-use sfv::{BareItem, InnerList, ListEntry};
+use sfv::{BareItem, Dictionary, InnerList, ListEntry};
 
 use crate::components::TargetField;
 use crate::errors::{InvalidFormat, SignatureInputError};
@@ -36,7 +36,7 @@ impl SignatureInput {
         };
 
         let dictionary = sfv::Parser::new(input.as_bytes())
-            .parse_dictionary()
+            .parse::<Dictionary>()
             .map_err(InvalidFormat::Dictionary)?;
 
         let mut profiles: HashMap<String, SignatureInput> = HashMap::new();

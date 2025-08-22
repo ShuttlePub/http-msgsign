@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use sfv::Dictionary;
 use crate::digest::DigestHash;
 use crate::errors::{ExtractHeaderError, InvalidContentDigest};
 
@@ -21,7 +21,7 @@ impl ContentDigest {
         };
 
         let dict = sfv::Parser::new(header.as_bytes())
-            .parse_dictionary()?
+            .parse::<Dictionary>()?
             .into_iter()
             .map(|(alg, digest)| match digest {
                 sfv::ListEntry::Item(sfv::Item {

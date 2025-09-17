@@ -1,4 +1,5 @@
 mod request;
+mod response;
 
 pub use http_content_digest::{BodyDigest, ContentHasher, DigestHash, errors::DigestError};
 

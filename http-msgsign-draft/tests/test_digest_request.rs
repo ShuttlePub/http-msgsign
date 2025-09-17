@@ -41,3 +41,15 @@ async fn digest() {
 
     println!("{:#?}", request);
 }
+
+#[tokio::test]
+async fn verify_digest() {
+    let request = create_request();
+    let request = request.digest::<Sha256Hasher>().await;
+    assert!(request.is_ok());
+    
+    let request = request.unwrap();
+    let request = request.verify_digest::<Sha256Hasher>().await;
+    
+    assert!(request.is_ok());
+}

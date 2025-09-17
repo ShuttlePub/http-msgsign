@@ -25,19 +25,19 @@ impl Digest {
             }
         };
 
-        let items = header.split("=").collect::<Vec<&str>>();
-
-        if items.len() != 2 {
+        // `Digest` can specify multiple algorithms, but this is not permitted in `draft-cavage-http-signatures-12`.
+        // This is because, unlike Content-Digest,
+        // there is no way to distinguish the `=` that appears when the digest value is Base64-encoded from `<alg_name>=<digest_value>`.
+        let Some((alg, digest)) = header.split_once("=") else {
             return Err(InvalidDigestDataFormat {
-                reason: "`Digest` can specify multiple algorithms, but this is not permitted in `draft-cavage-http-signatures-12`.",
+                reason: "no `=` found"
             })?;
-        }
+        };
 
-        let alg = items[0].to_string();
-        let digest = base64::engine::general_purpose::STANDARD.decode(items[1])?;
+        let digest = base64::engine::general_purpose::STANDARD.decode(digest)?;
 
         Ok(Self {
-            alg,
+            alg: alg.to_string(),
             digest: DigestHash::new(digest),
         })
     }

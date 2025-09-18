@@ -9,17 +9,27 @@ use std::str::FromStr;
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub(crate) struct SignatureInput {
-    pub key_id: String,
-    pub algorithm: String,
-    pub created: Option<u64>,
-    pub expires: Option<u64>,
-    pub headers: IndexSet<TargetField>,
-    pub signature: Vec<u8>,
+pub struct SignatureInput {
+    pub(crate) key_id: String,
+    pub(crate) algorithm: String,
+    pub(crate) created: Option<u64>,
+    pub(crate) expires: Option<u64>,
+    pub(crate) headers: IndexSet<TargetField>,
+    pub(crate) signature: Vec<u8>,
 }
 
 impl SignatureInput {
-    pub fn seek_request<B>(
+    pub fn key_id(&self) -> &str {
+        &self.key_id
+    }
+
+    pub fn algorithm(&self) -> &str {
+        &self.algorithm
+    }
+}
+
+impl SignatureInput {
+    pub(crate) fn seek_request<B>(
         &self,
         request: &Request<B>,
     ) -> Result<SignatureBase, HttpPayloadSeekError> {
@@ -32,7 +42,7 @@ impl SignatureInput {
         Ok(SignatureBase::from_components(seeked))
     }
 
-    pub fn seek_response<B>(
+    pub(crate) fn seek_response<B>(
         &self,
         response: &Response<B>,
     ) -> Result<SignatureBase, HttpPayloadSeekError> {

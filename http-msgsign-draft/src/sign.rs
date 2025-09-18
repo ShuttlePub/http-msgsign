@@ -15,6 +15,10 @@ pub use self::params::*;
 pub use self::request::*;
 pub use self::response::*;
 
+pub mod headers {
+    pub use super::input::*;
+}
+
 pub trait SignerKey: 'static + Sync + Send {
     fn id(&self) -> String;
     fn algorithm(&self) -> String;

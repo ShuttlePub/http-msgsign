@@ -1,5 +1,5 @@
-use crate::errors::{HttpPayloadSeekError, InvalidValue, SignatureInputError};
-use crate::sign::SignatureBase;
+use crate::errors::{HttpPayloadSeekError, InvalidValue, SignatureInputError, VerificationError};
+use crate::sign::{SignatureBase, VerifierKey};
 use crate::sign::field::{CREATED, EXPIRES, REQUEST_TARGET, TargetField, TimeOrDuration};
 use base64::Engine;
 use http::{HeaderMap, HeaderName, Request, Response};
@@ -25,6 +25,42 @@ impl SignatureInput {
 
     pub fn algorithm(&self) -> &str {
         &self.algorithm
+    }
+
+    pub fn created(&self) -> Option<u64> {
+        self.created
+    }
+
+    pub fn expires(&self) -> Option<u64> {
+        self.expires
+    }
+
+    pub fn verify_request<B>(
+        &self,
+        request: &Request<B>,
+        key: &impl VerifierKey
+    ) -> Result<(), VerificationError>
+    where
+        B: http_body::Body + Send,
+        B::Data: Send
+    {
+        let base = self.seek_request(request)?;
+        base.verify(key, &self.signature)?;
+        Ok(())
+    }
+    
+    pub fn verify_response<B>(
+        &self,
+        response: &Response<B>,
+        key: &impl VerifierKey
+    ) -> Result<(), VerificationError>
+    where
+        B: http_body::Body + Send,
+        B::Data: Send
+    {
+        let base = self.seek_response(response)?;
+        base.verify(key, &self.signature)?;
+        Ok(())
     }
 }
 
@@ -156,5 +192,29 @@ impl SignatureInput {
             headers,
             signature,
         })
+    }
+}
+
+impl<B> TryFrom<&Request<B>> for SignatureInput
+where
+    B: http_body::Body + Send,
+    B::Data: Send
+{
+    type Error = SignatureInputError;
+    
+    fn try_from(value: &Request<B>) -> Result<Self, Self::Error> {
+        Self::from_header(value.headers())
+    }
+}
+
+impl<B> TryFrom<&Response<B>> for SignatureInput
+where
+    B: http_body::Body + Send,
+    B::Data: Send
+{
+    type Error = SignatureInputError;
+    
+    fn try_from(value: &Response<B>) -> Result<Self, Self::Error> {
+        Self::from_header(value.headers())
     }
 }

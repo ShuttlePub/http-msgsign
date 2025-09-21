@@ -28,11 +28,11 @@ pub trait RequestSign {
         Self: Sized;
 
     fn verify_sign<V: VerifierKey>(
-        self,
+        &self,
         key: &V,
-    ) -> impl Future<Output = Result<Self, VerificationError>> + Send
+    ) -> impl Future<Output = Result<(), VerificationError>> + Send
     where
-        Self: Sized;
+        Self: Sized + Sync;
 }
 
 impl<B> RequestSign for Request<B>
@@ -66,15 +66,10 @@ where
         Ok(Self::from_parts(parts, body))
     }
 
-    async fn verify_sign<V: VerifierKey>(self, key: &V) -> Result<Self, VerificationError> {
-        let (parts, body) = self.into_parts();
-        let input = SignatureInput::from_header(&parts.headers)?;
-
-        let req = Self::from_parts(parts, body);
-        let seeked = input.seek_request(&req)?;
-
+    async fn verify_sign<V: VerifierKey>(&self, key: &V) -> Result<(), VerificationError> {
+        let input = SignatureInput::try_from(self)?;
+        let seeked = input.seek_request(self)?;
         seeked.verify(key, &input.signature)?;
-
-        Ok(req)
+        Ok(())
     }
 }

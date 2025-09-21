@@ -1,6 +1,6 @@
 [package]
 name = "http-msgsign-draft"
-version = "0.2.1"
+version = "0.3.0"
 description = "Add functionality for draft-cavage-http-signatures-12 to http."
 repository = { workspace = true }
 authors.workspace = true

@@ -12,7 +12,7 @@ where
     B::Data: Send,
 {
     type Error = DigestError;
-    type Content = Response<BoxBody<Bytes, DigestError>>;
+    type Content = Response<crate::body::Body>;
 
     async fn digest<H: ContentHasher>(self) -> Result<Self::Content, Self::Error> {
         let (mut parts, body) = self.into_parts();

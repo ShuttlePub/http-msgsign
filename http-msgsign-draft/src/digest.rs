@@ -1,7 +1,7 @@
 mod request;
 mod response;
 
-pub use http_content_digest::{BodyDigest, ContentHasher, DigestHash, errors::DigestError};
+pub use http_content_digest::{body, BodyDigest, ContentHasher, DigestHash, errors::DigestError};
 
 pub mod header;
 

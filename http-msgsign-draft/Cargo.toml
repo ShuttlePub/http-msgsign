@@ -1,6 +1,6 @@
 [package]
 name = "http-msgsign-draft"
-version = "0.3.0"
+version = "0.4.0"
 description = "Add functionality for draft-cavage-http-signatures-12 to http."
 repository = { workspace = true }
 authors.workspace = true
@@ -13,7 +13,7 @@ http-body = { workspace = true }
 http-body-util = { workspace = true }
 bytes = { workspace = true }
 base64 = { workspace = true }
-http-content-digest = { path = "../http-content-digest", version = "^0.1" }
+http-content-digest = { path = "../http-content-digest", version = "^0" }
 
 thiserror = { workspace = true }
 

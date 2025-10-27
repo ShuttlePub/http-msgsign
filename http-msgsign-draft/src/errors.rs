@@ -61,6 +61,8 @@ pub enum VerificationError {
     ParseSignature(#[from] SignatureInputError),
     #[error(transparent)]
     SeekPayload(#[from] HttpPayloadSeekError),
+    #[error("signature unverified.")]
+    Unverified,
     #[error(transparent)]
     Crypto(Box<dyn std::error::Error + Sync + Send>),
 }
